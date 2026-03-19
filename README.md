@@ -1,13 +1,8 @@
 # Superpowers
 
+Fork of [obra/superpowers](https://github.com/obra/superpowers) by Jesse Vincent, adapted to my needs.
+
 Superpowers is a complete software development methodology for your coding agents, built on top of a set of composable skills and some initial instructions that make sure your agent uses them.
-
-
-## We're Hiring!
-
-We're hiring someone to help out full time with Superpowers community and code work. 
-You can read about the job at https://primeradiant.com/jobs/superpowers-community-engineer/
-If this sounds like someone you know, definitely send them our way.
 
 ## Quickstart
 
@@ -27,7 +22,10 @@ There's a bunch more to it, but that's the core of the system. And because the s
 
 ## Commercial Services
 
-If you're using Superpowers in enterprise and could benefit from commercial support, additional tooling, or managed spending, please don't hesitate to drop us a line at sales@primeradiant.com.
+## Sponsorship
+
+If Superpowers has helped you do stuff that makes money and you are so inclined, consider [sponsoring the original author's opensource work](https://github.com/sponsors/obra).
+
 
 ## Installation
 
@@ -266,8 +264,8 @@ Because skills and plugins don't provide any feedback to creators, we have no id
 
 ## Community
 
-Superpowers is built by [Jesse Vincent](https://blog.fsck.com) and the rest of the folks at [Prime Radiant](https://primeradiant.com).
+Superpowers was originally built by [Jesse Vincent](https://blog.fsck.com) and the folks at [Prime Radiant](https://primeradiant.com). This fork is maintained by Thiemo Belmega.
 
-- **Discord**: [Join us](https://discord.gg/35wsABTejz) for community support, questions, and sharing what you're building with Superpowers
+- **Discord**: [Join the original project's community](https://discord.gg/35wsABTejz) for support, questions, and sharing what you're building with Superpowers
 - **Issues**: https://github.com/obra/superpowers/issues
 - **Release announcements**: [Sign up](https://primeradiant.com/superpowers/) to get notified about new versions
