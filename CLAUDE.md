@@ -1,5 +1,9 @@
 # Contributor guidelines
 
+Operating guidance (the always-on working defaults) is the source of truth in @AGENTS.md — it
+applies when working in this repo too. This file adds only the fork's design principles and
+repo-specific notes.
+
 This is a minimalist fork of [obra/superpowers](https://github.com/obra/superpowers) by
 Jesse Vincent. The thesis: 2026 models and harnesses have absorbed most of what the original
 plugin added, so this fork keeps only the skills that still shape agent behavior in ways the
@@ -30,6 +34,8 @@ model won't do on its own, and leans on native harness capabilities for everythi
 ## Working in this repo
 
 - Skills live in `skills/<name>/SKILL.md` with `name` + `description` frontmatter.
-- The `SessionStart` hook (`hooks/`) injects the `using-superpowers` bootstrap so skills
-  auto-trigger.
+- `AGENTS.md` is the always-on operating guide: an essence per discipline plus "→ load skill X"
+  pointers. It carries the routing/enforcement that a SessionStart hook + bootstrap used to do,
+  but as cross-harness text. Edit its managed block (between the `DCP:` markers) here.
 - Keep skill content tight — length is a cost. Prefer one sharp rule over three examples.
+- Research notes go in `docs/research/`; brainstorming specs in `docs/specs/`.

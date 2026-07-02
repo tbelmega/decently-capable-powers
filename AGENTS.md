@@ -1,5 +1,5 @@
 # Operating guide
-<!-- DAP:START — managed block; edit in the distinctly-adequate-powers repo, then run its UPDATE.md -->
+<!-- DCP:START — managed block; edit in the decently-capable-powers repo, then run its UPDATE.md -->
 
 Always-on working defaults. Each is the essence (the fallback); where a fuller procedure exists,
 a → line says which skill to load for depth. Loading is the model's judgment, not enforced.
@@ -7,6 +7,11 @@ a → line says which skill to load for depth. Loading is the model's judgment, 
 ## Before building
 For non-trivial work the user hasn't already fully specified, turn the idea into an agreed design
 before implementing. → When starting feature/creative work, load `brainstorming`.
+
+## Understanding unfamiliar code
+Before planning against a codebase, system, or feature you don't already understand, map how it
+actually works first — don't guess from names. → To map or document current behavior, load
+`research`.
 
 ## Testing — decide once per work-stream, not per task
 When you start a distinct body of work (a new plan/epic, or the first code-changing turn), ask
@@ -44,8 +49,10 @@ push back on what's wrong. No performative agreement. → For nuanced cases, loa
 `receiving-code-review`.
 
 ## Code quality
-<!-- TODO(code-quality): fill from repo discussion — architecture boundaries (3-tier?), preferred
-patterns / anti-patterns, file-size & module-boundary rules. Left blank until defined rather than
-guessed. -->
+Write to the project's existing conventions. Favor strong, explicit types and clear module
+boundaries; avoid hasty abstractions (extract on genuine, repeated need, not predicted reuse).
+→ When writing or reviewing code, load `coding-standards`.
+<!-- TODO(code-quality): revisit the essence with the user — architecture boundaries (3-tier?),
+file-size rules, and which parts belong here vs. in the coding-standards skill. -->
 
-<!-- DAP:END -->
+<!-- DCP:END -->
