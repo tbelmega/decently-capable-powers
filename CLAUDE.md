@@ -24,18 +24,26 @@ model won't do on its own, and leans on native harness capabilities for everythi
   changes what the agent does at a decision point the model tends to get wrong (coding before
   understanding, skipping the failing test, patching symptoms, claiming unverified success,
   caving to review feedback). If it just explains a concept the model already knows, cut it.
-- **Zero heavy machinery.** No servers, no multi-harness sync scripts, no eval harness. Keep
-  the surface small enough to read and edit by hand.
-- **Multi-harness by convention, not packaging.** Primary target is Claude Code. Kept
-  compatible with Codex and Cursor by keeping operating guidance in `AGENTS.md` (which both
-  read) and skills as plain `SKILL.md` files that can be symlinked in — no per-harness plugin
-  manifests or marketplaces to maintain.
+- **Zero heavy machinery.** No servers, no multi-harness sync scripts, no eval harness. One
+  ~100-line install.sh is the entire distribution. Keep the surface small enough to read and
+  edit by hand.
+- **Multi-harness by verified convention.** Primary target is Claude Code; Codex and Cursor are
+  served by the same files through the agentskills.io SKILL.md standard and AGENTS.md — via
+  `install.sh`, no per-harness packaging. The exact load paths are verified research
+  (`ASSUMPTIONS.md` A2/A3), not folklore.
+- **Evidence over vibes.** Guidance exists because a dated, sourced claim in `ASSUMPTIONS.md`
+  justifies it. Adding or removing guidance means updating the registry.
 
 ## Working in this repo
 
-- Skills live in `skills/<name>/SKILL.md` with `name` + `description` frontmatter.
+- Skills live in `skills/<name>/SKILL.md` with `name` + `description` frontmatter; the folder
+  name must equal `name` (Cursor requirement). Skills marked `<!-- personal -->` are tuned to
+  the maintainer's stack/roster and are swappable.
 - `AGENTS.md` is the always-on operating guide: an essence per discipline plus "→ load skill X"
-  pointers. It carries the routing/enforcement that a SessionStart hook + bootstrap used to do,
-  but as cross-harness text. Edit its managed block (between the `DCP:` markers) here.
+  pointers, distributed as a marker-managed block by `install.sh`. Edit it here, then re-run
+  `install.sh`.
+- Any change to guidance that rests on an empirical claim goes through `ASSUMPTIONS.md`: new
+  guidance adds a row; removed guidance retires one. The `self-update` skill re-verifies rows.
 - Keep skill content tight — length is a cost. Prefer one sharp rule over three examples.
-- Research notes go in `docs/research/`; brainstorming specs in `docs/specs/`.
+- Research notes go in `docs/research/`; brainstorming specs in `docs/specs/`; the rebuild's
+  decision log is `docs/mission-log.md`.

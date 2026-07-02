@@ -6,6 +6,12 @@ most of what Superpowers used to add on top. Keep only the pieces that still cha
 behavior in ways the model won't do on its own — drop everything that merely re-implements
 a now-native capability or exists to maintain the upstream project.**
 
+> **Historical document.** This is the original minimization analysis that produced the 7-skill
+> fork. On 2026-07-02 the project was rebuilt on top of it (the `fable-powers` rebuild): all
+> verdicts below were re-verified against live research, three skills were added
+> (`agent-handover`, `model-selection`, `self-update`), and the deferred content work was
+> executed. Current reasoning lives in `docs/mission-log.md` and `ASSUMPTIONS.md`.
+
 ## Status — 2026-07-02
 
 What was actually executed (this section is authoritative where it differs from the per-feature
