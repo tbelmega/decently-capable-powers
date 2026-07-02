@@ -3,6 +3,8 @@ name: coding-standards
 description: Use when writing or reviewing code, adding types, or documenting
 ---
 
+<!-- personal: tuned to a TypeScript-first cloud/web stack. Swap the specifics for your own. -->
+
 Any code you write **must** follow all rules below, to make the codebase consistent, readable, maintainable and reliable.
 Only apply the rules to code sections that you are modifying anyway. 
 If you come across opportunities where existing code can be improved with these rules, but doing so would cause wide spread changes outside of the scope of your current task, focus on your task instead and return a refactoring suggestion for later to the user or orchestrating agent. (Example: Renaming a global function, that would require updating many other files.)

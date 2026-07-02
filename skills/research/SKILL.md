@@ -1,6 +1,6 @@
 ---
 name: research
-description: Use when asked to map out or document in depth how a codebase, system, or feature currently works before planning or implementation
+description: Use when you need to map how a codebase, system, or feature currently works before planning or implementing against it — or when asked to document current behavior in depth
 ---
 
 # Research
