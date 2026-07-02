@@ -5,11 +5,13 @@ reasoning for each piece. This fork's thesis: **2026 models and harnesses have a
 most of what Superpowers used to add on top. Keep only the pieces that still change agent
 behavior in ways the model won't do on its own — drop everything that merely re-implements
 a now-native capability or exists to maintain the upstream project.**
+// NOTE the drawbacks of superpowers are: where it condradicts the agent behavior intended by the model producer/lab, it can degrade performance. AND: we are trying to be token/usage efficient now
 
 ## The lens
 
 A modern coding harness (Claude Code, 2026) now does natively:
 
+// NOTE: one specialty of my forked "plan writing" skill was that I required each task of each plan to end with a subtask "run typechecks, tests and commit if green with message <PRE DEFINED COMMIT MESSAGE>. leading to small, self-contained, guaranteed green commits. we can likely encourage that via AGENTS.md/CLAUDE.md? 
 - **Plan mode** + `TodoWrite` task tracking (was: writing-plans / executing-plans)
 - **Task / subagent dispatch**, including parallel dispatch (was: subagent-driven-development / dispatching-parallel-agents)
 - **`EnterWorktree`** and native isolation (was: using-git-worktrees)
@@ -37,6 +39,7 @@ and doesn't exist natively. **Trim:** the browser-based *visual companion* (a 1,
 server + HTML + start/stop shell scripts) is exactly the kind of heavy machinery this fork
 exists to shed — it contradicts "rely on native capabilities" and is a maintenance liability.
 Keep the dialogue-and-gate discipline; drop the visual server. (Flagged below as a sub-decision.)
+// NOTE also we will optimize for a workflow that delegate visiual decisions to Claude Design
 
 ### test-driven-development — KEEP (trim)
 The distinctive content is the **Iron Law** ("no production code without a failing test first;
@@ -45,6 +48,8 @@ excuse an agent invents to skip it. This is genuinely behavior-shaping: models d
 writing implementation first and tests after (or never). Native harnesses do not enforce
 test-first. Worth keeping, but it can lose ~40% of its length — the point is made by the Iron
 Law, red/green/refactor, and the rationalization table; the worked examples are padding.
+// NOTE I'm not sure about this. maybe we can make TDD optional - require the model to ask the user wether it should follow TDD or not for a given task.
+// I'm generally happy with the code outcome through TDD, but only after heavily steering towards integration-style testing over mock-heavy unit testing; and shaping the code structure before letting the agent write code (e.g. 3 tier architecture with certain patterns). I see agents apply TDD to not only application code, but e.g. infrastructure code in a way that doesn't help. let's experiment with this 
 
 ### systematic-debugging — KEEP (trim)
 Two ideas here are worth their weight: "**no fixes without root-cause investigation first**"
@@ -74,6 +79,7 @@ discipline — is worth a sentence, not a 174-line skill plus a reviewer-prompt 
 premise ("harness-native plan mode is an optional helper, not the source of truth") is the
 *opposite* of this fork's thesis. Fold the anti-placeholder note into brainstorming's handoff
 and let the harness own planning.
+// NOTE what I liked about my modified plan-writing skill was the opportunity to review the plan, and have it structure tasks with checkboxes that I could observe being check off; if the model stalled, I had a place to restart the plan. on the other hand each "checking the checkbox" required a tool call which costs tokens
 
 ### executing-plans — DROP
 "Load a plan and do the tasks in order, inline" is exactly default harness behavior. The only
@@ -88,6 +94,7 @@ the harness's native subagent/plan capabilities, and it's the heaviest machinery
 Keeping it contradicts the fork's thesis. I recommend dropping it and leaning on native Task
 dispatch; if the two-verdict review gate proves missed, it can come back as a lightweight note
 rather than a scripted framework. **This is the call most worth your review.**
+// NOTE yes, drop. I want to leave orchestration mostly to the native agent behavior, engcouraging the use of subagents for tasks that require little context (e.g. codebase reseach, web research, running tests and fixing in a loop) while discouraging the use of subagent for tasks that require the subagent to build up a significant portion of the context that the orchestrating agent already has - big picture of the planned feature, completed changes, certain read code files and reasoning; I believe this would increase the usage cost and lead to worse implementation than letting the orchestrator implement. check me on this thought
 
 ### dispatching-parallel-agents — DROP
 Parallel subagent dispatch is native. The lone insight ("group independent failures, one agent
@@ -120,6 +127,8 @@ version (the "1% chance = you MUST," the 12-row Red Flags rationalization table,
 reference files) is overkill for a handful of skills. **Keep a slimmed version** whose only job
 is to establish the one behavior native discovery won't: *brainstorm before you build*. Drop the
 platform reference files (`references/{codex,pi,antigravity}-tools.md`).
+// NOTE: I'm not sold on the hook. I tend to request brainstorming or debugging "with skills" explicitly, and get aannoyed when it acitvates superpower while I'm asking simple questions or give simple tasks
+// the TDD and verify-before-completion can be useful to auto-activate, but I wonder if the model would discover and use them without a hook? maybe put reference in CLAUDE.md?
 
 ---
 
@@ -141,6 +150,7 @@ platforms.
 Supporting seven harnesses is a large maintenance surface with no payoff for a personal,
 experimental, Claude-Code-first fork. Pick one target (Claude Code) and delete the rest. This is
 the single biggest bloat reduction and is squarely on-thesis.
+// NOTE I do personally use Codex, Cursor and Claude side by side. I'd like to keep compatibility with these 3. should be easy though, Cursor and Codex read AGENTS.md and I tend to symlink a local checkout of these skills into the project or harness, so we don't have to deal with different marketplaces or plugin mechanisms. deleting the dot-folders if not a bad call - but: let's review the codex and cursor folders and see if there's anything we want to rescue into AGENTS.md or some other file
 
 ---
 
@@ -156,7 +166,7 @@ the single biggest bloat reduction and is squarely on-thesis.
 - **`scripts/bump-version.sh`, `.version-bump.json`, `package.json`** — keep only if you'll cut
   versioned releases; `package.json` currently points `main` at the dropped opencode plugin and
   declares a `pi` package — needs a rewrite or removal.
-- **`CODE_OF_CONDUCT.md`** — cheap to keep, but upstream-flavored; your call.
+- **`CODE_OF_CONDUCT.md`** — cheap to keep, but upstream-flavored; your call. // NOTE drop
 
 ---
 
@@ -169,7 +179,6 @@ writes new specs there. `docs/testing.md` and `docs/windows/` go with the test/p
 ---
 
 ## Repo meta
-- **`assets/`** (app-icon.png, superpowers-small.svg) — branding; drop or replace once the fork
   is renamed. Not urgent.
 - **`LICENSE`** — KEEP (Jesse Vincent copyright is required attribution).
 - **`README.md`** — rewrite for the minimal fork (already partially done).
@@ -180,7 +189,7 @@ writes new specs there. `docs/testing.md` and `docs/windows/` go with the test/p
 
 | Piece | Verdict |
 |---|---|
-| brainstorming (dialogue + gate) | **KEEP (trim)** |
+| brainstorming (dialogue + gate) | **KEEP (trim)** | // NOTE: this is the most valuable skill. don't trim yet, let me read it first in original form
 | brainstorming visual companion server | **DROP** *(sub-decision)* |
 | test-driven-development | **KEEP (trim)** |
 | systematic-debugging | **KEEP (trim)** |

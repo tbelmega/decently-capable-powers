@@ -10,13 +10,22 @@ model won't do on its own, and leans on native harness capabilities for everythi
 
 - **Native-first.** Before adding a skill or hook, ask whether the harness already does this
   (plan mode, todos, subagent dispatch, worktrees, code-review). If so, don't re-implement it.
+- **Work with the model's grain.** Where guidance contradicts the behavior the model's lab
+  trained into it, it tends to *degrade* performance, not improve it. Add discipline that fills
+  a genuine gap, not friction that fights the model.
+- **Token-efficient.** Usage cost is a first-class constraint. Prefer guidance that costs
+  nothing at runtime (short always-on instructions) over machinery that spends tokens per step
+  (extra tool calls, checkbox bookkeeping, subagent context rebuilds). Length is a cost.
 - **Skills are behavioral discipline, not tutorials.** A skill earns its place only if it
   changes what the agent does at a decision point the model tends to get wrong (coding before
   understanding, skipping the failing test, patching symptoms, claiming unverified success,
   caving to review feedback). If it just explains a concept the model already knows, cut it.
 - **Zero heavy machinery.** No servers, no multi-harness sync scripts, no eval harness. Keep
   the surface small enough to read and edit by hand.
-- **Single target.** This fork supports Claude Code only.
+- **Multi-harness by convention, not packaging.** Primary target is Claude Code. Kept
+  compatible with Codex and Cursor by keeping operating guidance in `AGENTS.md` (which both
+  read) and skills as plain `SKILL.md` files that can be symlinked in — no per-harness plugin
+  manifests or marketplaces to maintain.
 
 ## Working in this repo
 
