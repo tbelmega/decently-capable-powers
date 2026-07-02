@@ -7,6 +7,8 @@ description: Use when asked to map out or document in depth how a codebase, syst
 
 Research is a deep-read workflow for understanding current behavior before planning or implementation.
 
+Before starting research, check `docs/research/` for documents about the topic or closely related topics. If any exist, defer the research workflow: read them first, summarize what they cover and their dates for the user, then offer to (1) stop researching and answer the user's questions from the existing documents, (2) verify the documents against the current code and update them if necessary, or (3) proceed with the full research workflow.
+
 ## Requirements
 
 - Clarify the scope if the request is ambiguous.

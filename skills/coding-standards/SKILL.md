@@ -12,12 +12,28 @@ If you come across opportunities where existing code can be improved with these 
 Types enforce contracts between caller and callee. Stricter typing reduces room for error and lessens the need for testing and documentation.
 
 - **Strong, explicit types** — Declare explicit types for all function signatures.
-- **Strict null checks** — Use non-nullable types by default. Handle `null` and `undefined` explicitly.
+- **Strict null checks** — Use non-nullable types by default. At boundaries, normalize optional fields so **presence** is checked with **`if (value)`** where that matches the domain (see **Truthiness and empty optional values** below); use explicit `null` / `undefined` checks only when the domain requires it (e.g. PATCH, or valid `0` / `""`).
 - **Don't work around the type system** — No `any`, no non-null assertions, no unchecked type casts.
 - Import library types if available, rather than defining custom types for input/output of libraries.
 - Keep typing in sync with input validation at system boundaries.
 - Aim for cross-service type safety, e.g. sharing the same type files between frontend and backend.
 - Make use of generic types, union types and branded strings to strengthen typing.
+
+### Evolving persisted and API-facing types
+
+Types that mirror **stored documents** (JSON files, DB rows, export formats) or **long-lived HTTP responses** outlive a single deploy. Old data will not contain keys for fields added later.
+
+- When adding a **new property** to an existing declaration, mark it **optional** (e.g. `projectId?: string | null`) **unless** you are explicitly shipping a **migration or backfill** that updates every existing record (or you version the schema and read old versions).
+- **Omitted key** (`undefined` after parse) and **explicit `null`** are different; persisted data often omits optional fields. Decoders and callers must tolerate **missing** keys, not only `null`.
+- Do **not** add a new required field to a persisted shape and assume “everyone will redeploy empty data”; that breaks real installs.
+
+### Truthiness and empty optional values
+
+Design types and normalization so that **presence vs absence** can be written as **`if (value)`** instead of **`if (value === null \|\| value === undefined)`**, unless there is a **documented, exceptional** reason.
+
+- **Default rule:** Do **not** assign **different meanings** to different **falsy** values for the same concept (e.g. do not use `null` for “empty” and `undefined` for “something else” in normal domain code). Treat **all falsy values the same** for “no value / not set” so **`if (value)`** is the idiomatic guard.
+- **PATCH / partial-update payloads** are the main **exception:** **`undefined`** means “omit / do not change this field”; **`null`** (or an explicit empty sentinel agreed in the contract) means “set to empty / clear.” Document that on the request type or route.
+- **Counterexamples:** If **`0`**, **`""`**, or **`false`** are **valid domain values** (e.g. numeric zero, empty string that is distinct from missing), you cannot use truthiness alone — use explicit comparisons or separate types. The “`if (value)`” goal applies to **optional references, labels, and similar** where only “present vs absent” matters.
 
 ## Comments and Documentation
 
