@@ -71,6 +71,11 @@ the test, implement. Repeat. Don't write one large test up front.
 
 Confirm: test passes, other tests pass, output pristine. Test fails? Fix the code, not the test.
 
+**Never make green by weakening the red.** Deleting a failing test, skipping it, loosening its
+assertions, or catching the error it exposes is reward hacking, not progress. If the test itself
+is genuinely wrong, say so explicitly and fix it as its own step — with the reason stated —
+never silently in the same change that makes it pass.
+
 ### REFACTOR — After Green Only
 
 Improve names and structure while keeping tests green. Don't add behavior.
