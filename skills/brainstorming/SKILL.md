@@ -1,61 +1,101 @@
 ---
 name: brainstorming
-description: Use before any creative work — new features, components, behavior changes — to turn an idea into an agreed design before implementation
+description: Use when the user asks to brainstorm, or before feature-level work — new features, components, behavior changes — the user hasn't already fully specified; turns an idea into an agreed design before implementation
 ---
 
 # Brainstorming Ideas Into Designs
 
-Turn ideas into agreed designs through collaborative dialogue before any implementation.
+Turn ideas into agreed designs through collaborative dialogue. Disambiguate purpose, scope, architecture, details.
+And volunteer the design thinking the user didn't ask for. The role is active design partner, not requirements secretary.
 
-**Hard gate:** no implementation — no code, no scaffolding, no file changes — until a design has
-been presented and the user has approved it. This applies regardless of perceived simplicity:
-"simple" projects are where unexamined assumptions waste the most work. For truly small work the
-design can be a few sentences, but it gets presented and approved.
+**Gate:** once brainstorming has started for a piece of work, no implementation — no code, no
+scaffolding, no file changes beyond the spec itself — until the design has been presented and the
+user has approved it. Work the user requests outside a brainstorming session is governed by the
+operating guide, not this gate.
 
-**Project override:** if the project defines its own design/spec workflow (in AGENTS.md,
-CLAUDE.md, or docs), defer to it entirely.
+**Project override:** if the project defines its own design/spec workflow (AGENTS.md, CLAUDE.md,
+docs), defer to it entirely.
+
+**Everything scales with the work** — number of questions, spec length, number of approaches,
+presentation granularity. A small feature is a handful of questions and a one-screen spec,
+reviewed in a single pass. The spec file itself is never skipped.
 
 ## The Process
 
-1. **Understand the context.** Current project state: files, docs, recent commits. If the
-   territory is unfamiliar, map it first (research skill).
+1. **Understand the context.** Current project state: files, docs, recent commits. Unfamiliar
+   territory: dispatch a subagent with the research skill; link its research note from the spec
+   so discovered constraints and conventions survive handoff and compaction.
 2. **Check scope.** A request describing multiple independent subsystems needs decomposition
    before detail questions: identify the pieces, how they relate, what order to build them —
    then brainstorm the first piece. Each sub-project gets its own spec → implementation cycle.
-3. **Ask questions one at a time.** Purpose, constraints, success criteria. Prefer multiple
-   choice when possible. One question per message; a topic that needs more becomes several
-   questions.
+3. **Clarify the goal.** While purpose and scope are still vague, questions beat proposals.
+   Question discipline:
+   - Ask only questions whose answers change the design. When the remaining ones wouldn't,
+     stop interviewing.
+   - Decide by default: if the answer is inferable from code, docs, or the user's demonstrated
+     preferences — or the decision is a two-way door (cheap to reverse) — decide it, record it
+     in the spec as an assumption, and move on. Ask only where being wrong is expensive.
+   - State your recommended answer with every question, not only when proposing approaches.
+   - Batch up to 4 questions per message (native multi-question prompts) only when they are
+     mutually independent — no question's relevance or framing depends on another's answer —
+     and close enough in topic that the user isn't context-switching. A dependent chain stays
+     one question at a time.
 4. **Draft the spec early.** Create `docs/specs/YYYY-MM-DD-<topic>.md` with
-   `Status: Draft — not for implementation` and keep it current as decisions land. Don't let
-   draft wording quietly turn assumptions into requirements the user never agreed to.
-5. **Propose 2–3 approaches** with trade-offs. Lead with your recommendation and why.
-6. **Present the design in sections** scaled to their complexity; confirm each section before
-   moving on. Cover architecture, components, data flow, error handling, testing. Apply YAGNI
-   ruthlessly — strike features the goal doesn't need.
-7. **Finalize the spec.** Drop the Draft status. Self-review for placeholders, contradictions,
-   ambiguity, and scope — fix inline. Add a Mermaid diagram only where a picture genuinely
-   clarifies (entity relationships, non-obvious sequences, lifecycles). Append the
-   implementation-guidance tail (below). Commit the spec.
-8. **User review gate.** Ask the user to review the spec file before proceeding; make requested
-   changes and re-review. Only continue on approval.
+   `Status: Draft — not for implementation`. The file exists from the first settled decision
+   onward, and decisions land in it in the same turn they're made — a decision that lives only
+   in conversation context is one compaction or crash away from lost. Don't let draft wording
+   quietly turn assumptions into requirements the user never agreed to.
+5. **Pivot to proposing.** Once purpose and rough scope are settled, stop interviewing and
+   propose — a concrete draft surfaces the remaining requirements faster than abstract questions
+   once there is a shape to react to. Offer 2–3 approaches where genuinely distinct trade-offs
+   exist; lead with your recommendation and why.
+6. **Volunteer what wasn't asked.** This is where the agent earns its keep:
+   - *Premise:* is this feature the right solution to the underlying problem? Say so early if not.
+   - *Pre-mortem:* how does this break — migrations, concurrency, data loss, security, backward
+     compatibility, operational cost. Raise the failure modes the user didn't know to ask about.
+   - *Opportunities:* existing code that already half-solves it; platform or harness capabilities
+     that make a planned component unnecessary.
+   - Before finalizing: name the ~3 most impactful things the spec is still not considering, and
+     triage them with the user.
+7. **Present the design** in one pass. Walk through it section-by-section, confirming as you
+   go, only when it is too large to review in one sitting.
+8. **Finalize and gate.** Self-review for placeholders, contradictions, ambiguity, and scope —
+   and check the design against the project's own design principles and conventions (from its
+   docs and code patterns). If the spec has grown past one implementation cycle, propose
+   splitting it: an MVP spec for immediate implementation, follow-up spec(s) for the rest —
+   the follow-ups become named extensions the MVP structure must accommodate. Add a Mermaid diagram only where a picture genuinely clarifies.
+   Append the implementation-guidance tail (below). Ask the user to review; iterate. On approval
+   — and only then — drop the Draft status and commit the spec.
 9. **Transition to implementation.** For multi-task work, use the harness's native planning
    (plan mode / task list) with the spec as the source of truth. For small work, implement
    directly.
 
-## Design Principles
+## What the spec covers
 
-- Break the system into units with one clear purpose each, communicating through well-defined
-  interfaces, understandable without reading their internals. If internals can't change without
-  breaking consumers, the boundaries need work.
-- In existing codebases: explore the current structure first and follow its patterns. Include
-  targeted improvements where existing problems affect this work; don't propose unrelated
-  refactoring.
+Purpose and acceptance criteria (verifiable checks the implementing agent can test against).
+Architecture and placement: which existing modules are touched, new vs. modified files, the seams
+created, which existing patterns to follow. Data flow, error handling, testing. Risks and open
+questions. Non-goals and rejected alternatives, each with its why — features struck during
+dialogue land here with the reason, so implementing agents don't reintroduce them and future
+brainstorms don't relitigate. Sections scale with the work: a small feature may cover several of
+these in a paragraph.
+
+## Extensibility judgment
+
+- The default is the simplest design that meets the spec.
+- Extensions the project already names — roadmap docs, stated plans, the user's own expansion
+  ideas — are design constraints, not scope: keep them out of the current build (MVP first),
+  but shape the structure so they slot in cleanly later — extension points where they'll
+  attach, no decisions that would force a rewrite to add them. Record them under non-goals
+  with a pointer to where they'd plug in.
+- For speculative extensibility, use judgment: identify the likely axes of change and keep them
+  cheap — don't build them, but don't design them out. Ask the user only when the choice is
+  expensive to reverse.
 
 ## Implementation Guidance (spec tail)
 
-End every finalized spec with a short section recording the agreed working decisions, so any
-implementing agent — after compaction, a handoff, or in a different harness — still carries
-them:
+End every finalized spec with this section, so any implementing agent — after compaction, a
+handoff, or in a different harness — still carries the agreed working decisions and the path:
 
 ```md
 ## Implementation guidance
@@ -63,4 +103,9 @@ them:
 - Isolation: <worktree / branch / current checkout, as agreed>
 - Verify: run <project's typecheck+test commands> before claiming any task done
 - Scope: build only what this spec specifies — propose extras, don't build them
+- Build order: <suggested sequence and why — e.g. riskiest interface first, thin vertical slice>
+- Effort routing: <which parts are mechanical (cheap model / low effort) and which are the hard
+  core (high effort) — per the model-selection skill>
+- Parallelism: <which pieces are independent enough to delegate to subagents/worktrees; which
+  need the orchestrator's accumulated context>
 ```
