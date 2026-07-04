@@ -40,9 +40,9 @@ model won't do on its own, and leans on native harness capabilities for everythi
   name must equal `name` (Cursor requirement). Personal setup (subscriptions, roster, stack
   specifics) lives in gitignored `skills/<name>/<base>.local.md` files, seeded from checked-in
   `<base>.template.md` siblings by install.sh and distributed through the existing skill-dir
-  symlinks (one canonical clone per machine); published SKILL.md text stays generic.
-  `coding-standards` still carries inline `<!-- personal -->` content, pending migration to
-  this convention.
+  symlinks (one canonical clone per machine); published SKILL.md text stays generic. Templates
+  are structure-only when the local content is private (model-selection's roster) and a complete
+  worked example when it is merely stack-specific (coding-standards' TypeScript rules).
 - `AGENTS.md` is the always-on operating guide: an essence per discipline plus "→ load skill X"
   pointers, distributed as a marker-managed block by `install.sh`. Edit it here, then re-run
   `install.sh`.
