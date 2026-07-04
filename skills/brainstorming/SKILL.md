@@ -108,4 +108,8 @@ handoff, or in a different harness — still carries the agreed working decision
 - Routing: <per work item: orchestrator or delegate, at what model/effort, and why — hard core
   needing the orchestrator's accumulated context vs. mechanical/compressible leaf — per the
   model-selection skill. Sequential by default; delegate for token efficiency, not speed>
+- Orchestrator: <model/effort for the implementing session — the cheapest tier that still covers
+  the hardest orchestrator-bound Routing item. The spec must be implementable by a fresh
+  session; continuing the spec session is a cost call (fine while its context is still small),
+  never a dependency — anything only the continued session knows belongs in the spec>
 ```
