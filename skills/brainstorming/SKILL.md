@@ -57,6 +57,9 @@ reviewed in a single pass. The spec file itself is never skipped.
      that make a planned component unnecessary.
    - Before finalizing: name the ~3 most impactful things the spec is still not considering, and
      triage them with the user.
+   - Before presenting: enumerate every design element not strictly entailed by the user's
+     request and confirm each as build / defer / cut — additions live in the spec as labeled
+     decisions, not prose the user is assumed to have absorbed.
 7. **Present the design** in one pass. Walk through it section-by-section, confirming as you
    go, only when it is too large to review in one sitting.
 8. **Finalize and gate.** Self-review for placeholders, contradictions, ambiguity, and scope —
@@ -64,12 +67,35 @@ reviewed in a single pass. The spec file itself is never skipped.
    docs and code patterns). If the spec has grown past one implementation cycle, propose
    splitting it: an MVP spec for immediate implementation, follow-up spec(s) for the rest —
    the follow-ups become named extensions the MVP structure must accommodate. Add a Mermaid diagram only where a picture genuinely clarifies.
-   Append the implementation-guidance tail (below). Ask the user to review; iterate. On approval
+   Write the Review summary (below) from the finished body, append the implementation-guidance
+   tail (below). Ask the user to review; iterate. On approval
    — and only then — drop the Draft status and commit the spec.
 9. **Transition to implementation.** For multi-task work, use the harness's native planning
    (plan mode / task list) with the spec as the source of truth, and turn the tail's Routing
    line into a concrete dispatch plan — what the orchestrator executes, what gets delegated at
    which model/effort, in what order — before writing code. For small work, implement directly.
+
+**Revising an approved spec** is a new approval, not an edit: present the delta — what changed,
+and above all what new scope or cost it introduces — and get explicit sign-off on each addition
+before marking the revision approved. Regenerate the Review summary; new [added] items are
+called out as new.
+
+## Review summary
+
+Every finalized spec opens with a **Review summary** written for a tired reviewer — plain words,
+no architecture vocabulary, ordered most- to least-consequential:
+
+- What this builds, in ≤3 sentences.
+- Every element that goes beyond what the user literally asked for, each tagged **[added]**
+  with one line of why and its cost. If a simpler path to the stated goal exists and the spec
+  doesn't take it, say so and why.
+- What this deliberately does not do.
+
+The body stays as detailed as the implementer needs; the summary is the part the human actually
+reads. It sits at the top but is written **last**: generate it at finalize time from the
+finished body, and regenerate it on every revision — a summary written before the body is a
+plan, not a summary, and one not refreshed after edits goes stale exactly where review matters
+most. [added] tags live only here, not inline in body sections.
 
 ## What the spec covers
 
