@@ -2,7 +2,9 @@
 <!-- DCP:START — managed block; edit in the decently-capable-powers repo, then re-run install.sh -->
 
 Always-on working defaults. Each is the essence (the fallback); where a fuller procedure exists,
-a → line says which skill to load for depth. Loading is the model's judgment, not enforced.
+a → line says which skill to load for depth. Loading is the model's judgment, not enforced —
+but never cite a skill ("per X") you haven't actually loaded; apply the essence and say so, or
+load the skill.
 
 ## Before building
 For non-trivial work the user hasn't already fully specified, turn the idea into an agreed design
@@ -58,6 +60,9 @@ end or the work should move to another harness/model, write a handoff instead of
 Delegate work that's compressible (large search, small result — codebase/web research, a test-fix
 loop) or that would pollute the main context. Keep work that leans on the orchestrator's
 accumulated big-picture context in the orchestrator — don't make a subagent rebuild it.
+Delegate for token efficiency, never for wall-clock speed: each dispatch rebuilds context from
+cold, so prefer sequential execution and fewer delegations when parallelizing wouldn't save
+tokens.
 
 ## Receiving code review
 Evaluate feedback technically: restate it, verify against the actual code, implement what's right,
@@ -72,7 +77,7 @@ boundaries; avoid hasty abstractions (extract on genuine, repeated need, not pre
 ## Choosing model and effort
 Match the model and reasoning effort to the task; prefer high effort over max — max measurably
 overthinks. If the work clearly fits a different model or harness in the user's roster better,
-say so before proceeding rather than grinding through. → To pick harness/model/effort for a work
-item, load `model-selection`.
+say so before proceeding rather than grinding through. → Before assigning model or effort to any
+work item — including a subagent dispatch — load `model-selection`.
 
 <!-- DCP:END -->

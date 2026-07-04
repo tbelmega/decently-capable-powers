@@ -67,8 +67,9 @@ reviewed in a single pass. The spec file itself is never skipped.
    Append the implementation-guidance tail (below). Ask the user to review; iterate. On approval
    — and only then — drop the Draft status and commit the spec.
 9. **Transition to implementation.** For multi-task work, use the harness's native planning
-   (plan mode / task list) with the spec as the source of truth. For small work, implement
-   directly.
+   (plan mode / task list) with the spec as the source of truth, and turn the tail's Routing
+   line into a concrete dispatch plan — what the orchestrator executes, what gets delegated at
+   which model/effort, in what order — before writing code. For small work, implement directly.
 
 ## What the spec covers
 
@@ -104,8 +105,7 @@ handoff, or in a different harness — still carries the agreed working decision
 - Verify: run <project's typecheck+test commands> before claiming any task done
 - Scope: build only what this spec specifies — propose extras, don't build them
 - Build order: <suggested sequence and why — e.g. riskiest interface first, thin vertical slice>
-- Effort routing: <which parts are mechanical (cheap model / low effort) and which are the hard
-  core (high effort) — per the model-selection skill>
-- Parallelism: <which pieces are independent enough to delegate to subagents/worktrees; which
-  need the orchestrator's accumulated context>
+- Routing: <per work item: orchestrator or delegate, at what model/effort, and why — hard core
+  needing the orchestrator's accumulated context vs. mechanical/compressible leaf — per the
+  model-selection skill. Sequential by default; delegate for token efficiency, not speed>
 ```
