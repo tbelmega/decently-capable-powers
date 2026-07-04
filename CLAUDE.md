@@ -37,12 +37,13 @@ model won't do on its own, and leans on native harness capabilities for everythi
 ## Working in this repo
 
 - Skills live in `skills/<name>/SKILL.md` with `name` + `description` frontmatter; the folder
-  name must equal `name` (Cursor requirement). Personal setup (subscriptions, roster, stack
-  specifics) lives in gitignored `skills/<name>/<base>.local.md` files, seeded from checked-in
-  `<base>.template.md` siblings by install.sh and distributed through the existing skill-dir
-  symlinks (one canonical clone per machine); published SKILL.md text stays generic. Templates
-  are structure-only when the local content is private (model-selection's roster) and a complete
-  worked example when it is merely stack-specific (coding-standards' TypeScript rules).
+  name must equal `name` (Cursor requirement). Personal setup never lives in published SKILL.md
+  text; two conventions serve it, both gitignored via `skills/**/*.local.md` and distributed
+  through the skill-dir symlinks (one canonical clone per machine): **private data**
+  (model-selection's roster) uses a checked-in skeleton `<base>.template.md` seeded to
+  `<base>.local.md` by install.sh; **shareable stack content** (coding-standards' `stacks/`)
+  uses published base files loaded directly per project stack, each with an optional
+  `<stack>.local.md` delta that wins on conflict — bases update via `git pull`, deltas survive.
 - `AGENTS.md` is the always-on operating guide: an essence per discipline plus "→ load skill X"
   pointers, distributed as a marker-managed block by `install.sh`. Edit it here, then re-run
   `install.sh`.

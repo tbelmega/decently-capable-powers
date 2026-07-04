@@ -1,12 +1,9 @@
-# Stack rules — worked example: TypeScript-first cloud/web
+# TypeScript — stack rules
 
-<!-- install.sh copies this file to stack.local.md; edit THAT copy, not this template.
-     stack.local.md is gitignored. This example is a complete, ready-to-use ruleset for a
-     TypeScript-first stack — keep it as-is if that's yours, rewrite it for your own language,
-     framework, and doc tooling if not. `git clean -xdf` deletes stack.local.md; recover by
-     re-seeding from this file. -->
+<!-- Published base, loaded for TypeScript projects. Personal additions/overrides go in
+     stacks/typescript.local.md (gitignored, optional — wins over this file on conflict). -->
 
-## Type safety (TypeScript)
+## Type safety
 
 - **Strict null checks** — Use non-nullable types by default. At boundaries, normalize optional
   fields so **presence** is checked with **`if (value)`** where that matches the domain (see

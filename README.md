@@ -67,15 +67,15 @@ Skills are symlinked, so repo edits are live immediately; the instruction blocks
 so **update = `git pull && ./install.sh`**. For a repo that wants checked-in, team-visible
 guidance instead: `./install.sh --project <dir>`.
 
-**One post-install step:** install.sh seeds two gitignored personal files from their checked-in
-templates — edit them for your setup:
+**One post-install step:** install.sh seeds `skills/model-selection/roster.local.md` from its
+template — edit it with your harnesses/subscriptions, model sweet spots, and standing
+assignments. It is gitignored (personal, never published) and reaches every harness through
+the skill symlinks.
 
-- `skills/model-selection/roster.local.md` — your harnesses/subscriptions, model sweet spots,
-  standing assignments (template is a blank skeleton: this data is yours alone).
-- `skills/coding-standards/stack.local.md` — your stack's type/doc/naming rules (template is a
-  complete TypeScript-first example: keep it if that's your stack, rewrite it if not).
-
-Both are never published and reach every harness through the skill symlinks.
+Coding standards are per-stack: published bases in `skills/coding-standards/stacks/`
+(typescript.md, kotlin.md, …) load automatically for matching projects and update with
+`git pull`. For personal additions or overrides, create a gitignored
+`stacks/<stack>.local.md` next to the base — it wins on conflict and survives pulls.
 
 ## Keeping it current
 

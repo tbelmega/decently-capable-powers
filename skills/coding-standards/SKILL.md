@@ -3,14 +3,16 @@ name: coding-standards
 description: Use when writing or reviewing code, adding types, or documenting
 ---
 
-<!-- Stack-specific rules live in stack.local.md (gitignored, seeded from stack.template.md
-     by install.sh — the template is a complete worked example for a TypeScript-first stack). -->
+<!-- Per-stack rules live in stacks/<stack>.md (published bases) with optional gitignored
+     stacks/<stack>.local.md personal deltas. -->
 
-Any code you write **must** follow the rules below plus the stack-specific rules in
-`stack.local.md` next to this file — **load it now**. If it is missing, or still the unedited
-template on a project whose stack doesn't match it, apply only the generic rules here plus the
-project's own conventions, and tell the user once per session to edit
-`skills/coding-standards/stack.local.md` (install.sh seeds it from `stack.template.md`).
+Any code you write **must** follow the rules below plus the stack rules for the project at
+hand: identify the project's stack(s) from its manifest/build files (e.g. `package.json` →
+typescript, `build.gradle.kts` → kotlin), then for each match **load `stacks/<stack>.md`**
+next to this file — plus `stacks/<stack>.local.md` if it exists (the user's personal delta;
+it wins where the two conflict). A multi-stack repo loads every matching pair. If no base in
+`stacks/` matches the project, apply the generic rules here plus the project's own
+conventions, and propose adding a `stacks/<stack>.md` — once, not per task.
 
 Only apply the rules to code sections that you are modifying anyway.
 If you come across opportunities where existing code can be improved with these rules, but doing
@@ -25,13 +27,13 @@ lessens the need for testing and documentation.
 
 - **Strong, explicit types** — Declare explicit types for all function signatures.
 - **Don't work around the type system** — No untyped escape hatches, no unchecked casts, no
-  asserting away nullability; the stack file names the concrete offenders for your language.
+  asserting away nullability; the stack files name the concrete offenders per language.
 - Import library types if available, rather than defining custom types for input/output of
   libraries.
 - Keep typing in sync with input validation at system boundaries.
 - Types that mirror **persisted data or long-lived APIs** outlive a single deploy: a new field
   must tolerate records written before it existed (optional until a migration or backfill
-  ships) — the stack file has the full mechanics.
+  ships) — the stack files have the full mechanics.
 
 ## Comments and Documentation
 
@@ -57,4 +59,4 @@ lessens the need for testing and documentation.
 - **Avoid generic names** — `data`, `info`, `handler` only when context makes them clear.
   **Never** `helper` or `manager`.
 - **Avoid generic file names** — Names that repeat across the codebase degrade search and tab
-  navigation; prefer domain-specific names. The stack file has your language's examples.
+  navigation; prefer domain-specific names. The stack files have per-language examples.
