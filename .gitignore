@@ -8,6 +8,10 @@ triage/
 .idea/
 docs/temp/
 
+# Personal config behind published skills — seeded from *.template.md by
+# install.sh, never committed (see docs/specs/2026-07-04-personal-config-extraction.md)
+skills/**/*.local.md
+
 # Eval harness lives in its own repository, cloned into evals/ for local
 # development (see CLAUDE.md / README.md). It is not part of the published
 # plugin, so the whole directory is ignored here.

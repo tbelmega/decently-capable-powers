@@ -7,9 +7,9 @@ keep their structure, update their parameters.
 ## Parameters (update before each run)
 
 - `{DATE}` — today's date
-- `{HARNESSES}` — harnesses in daily use (2026-07: Claude Code, OpenAI Codex CLI, Cursor)
-- `{MODELS}` — model roster with typical effort (2026-07: Opus 4.8 mid–xhigh, Sonnet 5,
-  GPT-5.5 low–high, Cursor Composer, GLM 5.2 via Cursor)
+- `{HARNESSES}` — harnesses in daily use — read from
+  `skills/model-selection/roster.local.md` (include Parked entries: renewal candidates)
+- `{MODELS}` — model roster with typical effort — read from the same file
 - `{REPO}` — absolute path to the checkout being updated
 
 ## Prompt 1 — harness capabilities

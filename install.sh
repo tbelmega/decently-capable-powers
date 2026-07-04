@@ -46,6 +46,23 @@ link_skills() {
   echo "  $target_root: $linked newly linked, $current already current"
 }
 
+# Seed gitignored personal config: for every skills/*/<base>.template.md,
+# copy it to <base>.local.md if that doesn't exist yet. The local file is
+# personal (subscriptions, roster, stack) and never committed.
+seed_local_files() {
+  local seeded=0
+  for tpl in "$REPO_DIR"/skills/*/*.template.md; do
+    [ -e "$tpl" ] || continue
+    local local_file="${tpl%.template.md}.local.md"
+    if [ ! -e "$local_file" ]; then
+      cp "$tpl" "$local_file"
+      echo "  seeded ${local_file#"$REPO_DIR"/} — edit it with your own setup"
+      seeded=$((seeded + 1))
+    fi
+  done
+  if [ "$seeded" -eq 0 ]; then echo "  all local files already present"; fi
+}
+
 # Replace (or append) the marker-delimited operating-guide block in $1.
 refresh_block() {
   local target="$1"
@@ -95,6 +112,9 @@ fi
 echo "Skills (symlinked; edits in the repo are live immediately):"
 link_skills "$HOME/.claude/skills"
 link_skills "$HOME/.agents/skills"
+
+echo "Personal config (gitignored *.local.md, reaches all harnesses via the symlinks):"
+seed_local_files
 
 echo "Operating guide (managed block):"
 refresh_block "$HOME/.claude/CLAUDE.md"

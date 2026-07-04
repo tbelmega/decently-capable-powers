@@ -41,11 +41,13 @@ measurably still have:
 | verification-before-completion | unverified — or gamed — success claims |
 | receiving-code-review | sycophantic caving to feedback |
 | coding-standards *(personal)* | type/naming/abstraction drift |
-| model-selection *(personal)* | wrong model or reasoning effort for the task |
+| model-selection | wrong model or reasoning effort for the task |
 | agent-handover | context rot; dead ends at usage limits |
 | self-update | this project itself going stale |
 
-*(personal)* = tuned to one person's stack and subscriptions; swap the contents for your own.
+*(personal)* = tuned to one person's stack; swap the contents for your own. model-selection is
+already generic: your own roster lives in a gitignored `roster.local.md` you edit after install
+(see below).
 
 **[`ASSUMPTIONS.md`](ASSUMPTIONS.md)** — the registry of empirical claims behind all of the
 above, each with what it justifies, a last-verified date, and evidence in `docs/research/`.
@@ -64,6 +66,11 @@ git clone <this repo> && cd <repo> && ./install.sh
 Skills are symlinked, so repo edits are live immediately; the instruction blocks are marker-managed,
 so **update = `git pull && ./install.sh`**. For a repo that wants checked-in, team-visible
 guidance instead: `./install.sh --project <dir>`.
+
+**One post-install step:** install.sh seeds `skills/model-selection/roster.local.md` from its
+template — edit it with your own harnesses/subscriptions, model sweet spots, and standing
+assignments. The file is gitignored (personal, never published) and reaches every harness
+through the skill symlinks.
 
 ## Keeping it current
 
