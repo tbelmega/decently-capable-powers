@@ -34,13 +34,20 @@ reviewed in a single pass. The spec file itself is never skipped.
    speculative edge cases are later by default. For an iteration, preserve the established
    scope and prior commitments; do not use MVP reasoning to remove expected parts. If context
    does not make the classification clear, ask the user before narrowing scope.
+   **Establish the stakes posture alongside scope:** who is exposed (paying customers on a
+   core path vs. a few pilot users behind a flag) and how reversible a bad ship is. Infer it
+   from context when possible; ask one composite question when not. It sets the rigor dial
+   for everything downstream — interview depth, pre-mortem intensity, spec length, and
+   whether rollout/flagging/migration belongs in the design. It modulates design-phase
+   thoroughness only: verification and test integrity stay governed by the operating guide.
 3. **Clarify the goal.** While purpose and scope are still vague, questions beat proposals.
    Question discipline:
    - Ask only questions whose answers change the design. When the remaining ones wouldn't,
      stop interviewing.
    - Decide by default: if the answer is inferable from code, docs, or the user's demonstrated
      preferences — or the decision is a two-way door (cheap to reverse) — decide it, record it
-     in the spec as an assumption, and move on. Ask only where being wrong is expensive.
+     in the spec as an assumption, and move on. Ask only where being wrong is expensive —
+     judged against the stakes posture: low exposure widens what counts as a two-way door.
    - State your recommended answer with every question, not only when proposing approaches.
    - Batch up to 4 questions per message (native multi-question prompts) only when they are
      mutually independent — no question's relevance or framing depends on another's answer —
