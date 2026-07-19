@@ -129,7 +129,8 @@ Purpose and acceptance criteria (verifiable checks the implementing agent can te
 Architecture and placement: which existing modules are touched, new vs. modified files, the seams
 created, which existing patterns to follow. Data flow, error handling, testing. Risks and
 questions the user explicitly decided to defer (or, after the first mention, deferred questions)
-belong in the `Deferred aspects` ledger below, not as unresolved material decisions. Non-goals
+belong in the `Deferred aspects` ledger below. Do not park unresolved material decisions there:
+ask those before approval. Non-goals
 and rejected alternatives, each with its why — features struck during
 dialogue land here with the reason, so implementing agents don't reintroduce them and future
 brainstorms don't relitigate. Sections scale with the work: a small feature may cover several of

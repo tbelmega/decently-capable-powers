@@ -7,7 +7,9 @@
 #     Cursor and Grok Build read both trees; identical names resolve to
 #     identical content, so the overlap is harmless.
 #   - Refreshes the DCP-markered operating-guide block in ~/.claude/CLAUDE.md
-#     (Claude Code) and ~/.codex/AGENTS.md (Codex).
+#     (Claude Code) and ~/.codex/AGENTS.md (Codex). Alternate Claude Code
+#     profiles (CLAUDE_CONFIG_DIR=~/.claude-<name>) are refreshed too when
+#     their CLAUDE.md already carries the marker — they opt in by having it.
 #   - Grok Build needs no targets of its own: it reads ~/.agents/skills/
 #     natively and loads ~/.claude/CLAUDE.md via its Claude compat, which is on
 #     by default — a ~/.grok/AGENTS.md copy would double-load the guide
@@ -122,6 +124,12 @@ seed_local_files
 
 echo "Operating guide (managed block):"
 refresh_block "$HOME/.claude/CLAUDE.md"
+# Alternate profiles opt in by already carrying the marker; never seed them here.
+for alt_claude_md in "$HOME"/.claude-*/CLAUDE.md; do
+  if [ -f "$alt_claude_md" ] && grep -q "$START_MARK" "$alt_claude_md"; then
+    refresh_block "$alt_claude_md"
+  fi
+done
 refresh_block "$HOME/.codex/AGENTS.md"
 
 cat <<'EOF'
