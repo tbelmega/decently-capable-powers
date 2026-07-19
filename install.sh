@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 # install.sh — deploy decently-capable-powers into user-level agent config.
 #
-# Default (no args): user-level install covering all three harnesses.
+# Default (no args): user-level install covering all four harnesses.
 #   - Symlinks each skills/<name>/ into ~/.claude/skills/ (read by Claude Code
-#     and Cursor) and ~/.agents/skills/ (read by Codex and Cursor). Cursor reads
-#     both trees; identical names resolve to identical content, so the overlap
-#     is harmless.
+#     and Cursor) and ~/.agents/skills/ (read by Codex, Cursor, and Grok Build).
+#     Cursor and Grok Build read both trees; identical names resolve to
+#     identical content, so the overlap is harmless.
 #   - Refreshes the DCP-markered operating-guide block in ~/.claude/CLAUDE.md
 #     (Claude Code) and ~/.codex/AGENTS.md (Codex).
+#   - Grok Build needs no targets of its own: it reads ~/.agents/skills/
+#     natively and loads ~/.claude/CLAUDE.md via its Claude compat, which is on
+#     by default — a ~/.grok/AGENTS.md copy would double-load the guide
+#     (ASSUMPTIONS.md A20).
 #   - Prints the one manual step for Cursor (no file-based global instructions;
 #     paste into Settings → Rules).
 #
@@ -16,8 +20,8 @@
 #   guidance instead of (or on top of) the user-level install.
 #
 # Idempotent — re-run after every change to this repo. Update = git pull + re-run.
-# Load paths verified against official harness docs 2026-07-02 (ASSUMPTIONS.md
-# A2/A3); the self-update skill re-verifies them.
+# Load paths verified against official harness docs 2026-07-02, Grok Build
+# 2026-07-19 (ASSUMPTIONS.md A2/A3/A20); the self-update skill re-verifies them.
 
 set -euo pipefail
 

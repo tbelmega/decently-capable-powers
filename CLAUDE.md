@@ -27,10 +27,10 @@ model won't do on its own, and leans on native harness capabilities for everythi
 - **Zero heavy machinery.** No servers, no multi-harness sync scripts, no eval harness. One
   ~100-line install.sh is the entire distribution. Keep the surface small enough to read and
   edit by hand.
-- **Multi-harness by verified convention.** Primary target is Claude Code; Codex and Cursor are
-  served by the same files through the agentskills.io SKILL.md standard and AGENTS.md — via
-  `install.sh`, no per-harness packaging. The exact load paths are verified research
-  (`ASSUMPTIONS.md` A2/A3), not folklore.
+- **Multi-harness by verified convention.** Primary target is Claude Code; Codex, Cursor, and
+  Grok Build are served by the same files through the agentskills.io SKILL.md standard and
+  AGENTS.md — via `install.sh`, no per-harness packaging. The exact load paths are verified
+  research (`ASSUMPTIONS.md` A2/A3/A20), not folklore.
 - **Evidence over vibes.** Guidance exists because a dated, sourced claim in `ASSUMPTIONS.md`
   justifies it. Adding or removing guidance means updating the registry.
 
