@@ -27,7 +27,9 @@ OpenAI Codex, and Cursor.
 **[`AGENTS.md`](AGENTS.md) — the always-on operating guide.** One essence per discipline, plus a
 "→ load skill X" pointer to the fuller procedure. Read natively by Codex and Cursor; reaches
 Claude Code via `CLAUDE.md`. This is the reliable layer — skills auto-trigger probabilistically,
-essences are always in context.
+essences are always in context. Final handoffs of distinct bodies of work start with a fixed
+implementation, verification, and independent-review receipt so completion state is visible
+across harnesses.
 
 **`skills/` — ten, loaded on demand.** Each exists to counter a failure mode current models
 measurably still have:

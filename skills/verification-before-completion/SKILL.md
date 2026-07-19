@@ -55,6 +55,23 @@ committing or PRing without running the checks · trusting a subagent's success 
 partial verification ("linter passed, so the build is fine") · a check modified in the same
 turn it started passing · tired and wanting the work over.
 
+## Completion Receipt
+
+When about to claim work is complete, lead with the always-on three-line receipt.
+
+```text
+IMPLEMENTATION: COMPLETE|INCOMPLETE
+VERIFICATION: PASSED|FAILED|NOT RUN
+REVIEW: PASSED|REQUESTED|BLOCKED|NOT CONFIGURED|WAIVED|NOT RUN
+```
+
+Attach compact evidence to each applicable line: the verification command and result; and the
+review mechanism's current-HEAD status, reviewer, round, URL, or artifact. `PASSED` means the
+configured terminal signal was freshly checked for the complete work. `REQUESTED`
+means an asynchronous tool or human review is pending. `WAIVED` means the user explicitly opted
+out. `NOT RUN` and `BLOCKED` are honest handoff states, never synonyms for completion when review
+is required.
+
 ## Bottom Line
 
-Run the command. Read the output. Then claim the result — with the evidence.
+Run the command. Read the output. Then claim the result — with the evidence and receipt.

@@ -167,6 +167,8 @@ handoff, or in a different harness — still carries the agreed working decision
 - TDD: <on/off and scope, as agreed with the user>
 - Isolation: <worktree / branch / current checkout, as agreed>
 - Verify: run <project's typecheck+test commands> before claiming any task done
+- Review: <once after every task in this spec is complete and final verification passes;
+  configured project mechanism or user choice, terminal signal, and clean-commit requirement>
 - Scope: build only what this spec specifies — propose extras, don't build them
 - Deferred aspects: <confirm the ledger was reconciled; point to it and any required tracker>
 - Build order: <suggested sequence and why — e.g. riskiest interface first, thin vertical slice>

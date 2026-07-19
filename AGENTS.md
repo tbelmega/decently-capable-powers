@@ -50,6 +50,31 @@ self-contained, green commits.
 Same rule as testing: ask the user once whether to work in an isolated branch/worktree or the
 current checkout; don't re-ask per task.
 
+## Independent review before hand-off
+When you start a distinct body of work (a new plan/epic, or the first code-changing turn),
+check whether the project defines a mechanism to request a code review. If not, ask the user once
+whether to request a code review at the end of this workstream and let them scope it ("raise a PR
+for human review" or "invoke tool X").
+
+Ensure the user decision or standing rule on this review gate is explicitly noted at the end of
+the respective spec / plan / tracking item.
+
+After every task in the distinct body of work is complete and final verification passes, request
+the review without waiting for the user to remind you.
+If the requested handoff state prevents review, preserve that state and report review as `NOT RUN`.
+
+## Completion receipt
+Begin the final handoff of a distinct body of work with these
+three lines, adding concise command, HEAD, URL, or review-artifact evidence after the status:
+
+    IMPLEMENTATION: COMPLETE|INCOMPLETE
+    VERIFICATION: PASSED|FAILED|NOT RUN
+    REVIEW: PASSED|REQUESTED|BLOCKED|NOT CONFIGURED|WAIVED|NOT RUN
+
+`REQUESTED` means an asynchronous tool or human has the review but has not completed it; `WAIVED`
+requires the user's explicit opt-out. Never claim the overall work complete when its
+required review has not passed.
+
 ## Context hygiene
 Externalize durable state — plans, decisions, research, progress — to files as you go; long
 sessions degrade and compaction can silently drop in-context constraints. When a session should
