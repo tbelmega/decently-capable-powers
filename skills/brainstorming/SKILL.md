@@ -47,6 +47,8 @@ reviewed in a single pass. The spec file itself is never skipped.
    quietly turn assumptions into requirements the user never agreed to. A draft may record
    questions that still need an answer, but is not approval-ready while any of them would
    materially change scope, behavior, ownership, acceptance criteria, or implementation cost.
+   Do not use [review-layout.md](review-layout.md) to structure the interview or initial draft:
+   it is a finalization-only tool, not a discovery template.
 5. **Pivot to proposing.** Once purpose and rough scope are settled, stop interviewing and
    propose — a concrete draft surfaces the remaining requirements faster than abstract questions
    once there is a shape to react to. Offer 2–3 approaches where genuinely distinct trade-offs
@@ -72,9 +74,12 @@ reviewed in a single pass. The spec file itself is never skipped.
    and check the design against the project's own design principles and conventions (from its
    docs and code patterns). If the spec has grown past one implementation cycle, propose
    splitting it: an MVP spec for immediate implementation, follow-up spec(s) for the rest —
-   the follow-ups become named extensions the MVP structure must accommodate. Add a Mermaid diagram only where a picture genuinely clarifies.
-   Write the Review summary (below) from the finished body, append the implementation-guidance
-   tail (below). Ask the user to review; iterate. On approval
+   the follow-ups become named extensions the MVP structure must accommodate. Add a Mermaid
+   diagram only where a picture genuinely clarifies. Write the Review summary (below) from the
+   finished body. Then, and only at this finalization
+   stage, use [review-layout.md](review-layout.md) to reorder the whole spec for review. It is
+   a checklist, not a form: retain only relevant sections and never invent content to fill a
+   heading. Append the implementation-guidance tail (below). Ask the user to review; iterate. On approval
    — and only then — drop the Draft status and commit the spec.
 9. **Transition to implementation.** For multi-task work, use the harness's native planning
    (plan mode / task list) with the spec as the source of truth, and turn the tail's Routing
@@ -86,10 +91,15 @@ and above all what new scope or cost it introduces — and get explicit sign-off
 before marking the revision approved. Regenerate the Review summary; new [added] items are
 called out as new.
 
-## Review summary
+## Review-facing front section
 
 Every finalized spec opens with a **Review summary** written for a tired reviewer — plain words,
-no architecture vocabulary, ordered most- to least-consequential:
+no architecture vocabulary. Write it last from the finished body, then put it first. Follow it
+with the other reviewer-facing sections from [review-layout.md](review-layout.md). Order this
+front section by what the user most needs to notice and judge, not by conversation chronology or
+implementation sequence. A reviewer who reads only the first quarter must encounter every
+decision, assumption, scope boundary, deferral, exclusion, and risk on which they could
+reasonably object or redirect the work.
 
 - What this builds, in ≤3 sentences.
 - Every element that goes beyond what the user literally asked for, each tagged **[added]**
@@ -97,11 +107,10 @@ no architecture vocabulary, ordered most- to least-consequential:
   doesn't take it, say so and why.
 - What this deliberately does not do.
 
-The body stays as detailed as the implementer needs; the summary is the part the human actually
-reads. It sits at the top but is written **last**: generate it at finalize time from the
-finished body, and regenerate it on every revision — a summary written before the body is a
-plan, not a summary, and one not refreshed after edits goes stale exactly where review matters
-most. [added] tags live only here, not inline in body sections.
+The body stays as detailed as the implementer needs, after the review-facing front section.
+Regenerate the summary and reorder the spec on every revision — a summary written before the
+body is a plan, not a summary, and one not refreshed after edits goes stale exactly where review
+matters most. [added] tags live only here, not inline in body sections.
 
 ## What the spec covers
 
