@@ -14,6 +14,13 @@ before implementing. → When starting feature/creative work, load `brainstormin
 Build what was asked — the smallest change that fulfills the request. No unrequested features,
 refactors, files, or "while I'm here" improvements; propose extras, don't build them.
 
+## Owner attention
+(Provisional rule — adopted 2026-07-20, to be reviewed after real-world use.)
+The user's attention is the scarcest resource. Shape everything put before them to minimize
+their time-to-decision: asks and recommendations first, evidence behind them; never make them
+read pages to discover a question. Prefer resolving a decision yourself over parking it on the
+user whenever your rules allow it.
+
 ## Understanding unfamiliar code
 Before planning against a codebase, system, or feature you don't already understand, map how it
 actually works first — don't guess from names. → To map or document current behavior, load
