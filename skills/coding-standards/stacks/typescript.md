@@ -24,9 +24,10 @@
 - TypeScript trusts a user-defined type predicate without proving its implementation. Use a
   property-presence guard only when the runtime contract guarantees that the checked property is
   **required and present** on the guarded member and **absent from every other member**. Make its
-  name compiler-checked as **declared-exclusive**, for example
-  `"bookingStatus" satisfies Exclude<keyof Confirmation, keyof Pending>`; this expression checks
-  spelling and declared exclusivity, not runtime presence or absence. Do not cast the result.
+  name compiler-checked as **declared-exclusive against every other member**. For a binary union,
+  for example, use `"bookingStatus" satisfies Exclude<keyof Confirmation, keyof Pending>`; a
+  larger union must check all remaining members, not just one. This checks spelling and declared
+  exclusivity, not runtime presence or absence. Do not cast the result.
 - A property-presence guard narrows a value already typed as the closed union; it does **not**
   validate untrusted external data. Validate external response shapes at the system boundary
   when the runtime contract is not otherwise guaranteed.
