@@ -21,6 +21,12 @@ their time-to-decision: asks and recommendations first, evidence behind them; ne
 read pages to discover a question. Prefer resolving a decision yourself over parking it on the
 user whenever your rules allow it.
 
+## Referring to files the user may open
+The user does not know about the harness scratchpad or any internal working directory. When
+pointing them to a file — an output, a render, a temp artifact — always print its full absolute
+path, never "in the scratchpad" or another location name they can't resolve. This holds for every
+file reference, not only scratchpad ones.
+
 ## Understanding unfamiliar code
 Before planning against a codebase, system, or feature you don't already understand, map how it
 actually works first — don't guess from names. → To map or document current behavior, load
