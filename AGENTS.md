@@ -53,9 +53,28 @@ checklist, load `verification-before-completion`.
 End each task by running typecheck + tests; commit when green with a clear message. Aim for small,
 self-contained, green commits.
 
-## Isolation — ask the user, once per work-stream
-Same rule as testing: ask the user once whether to work in an isolated branch/worktree or the
-current checkout; don't re-ask per task.
+## Worktrees and checkouts — the user assigns them, you never change them
+Work where you were started. **Never switch, create, or delete a git worktree, and never check
+out a different branch, unless the user told you to in this session.** Assume the working
+directory you were launched in was chosen deliberately; a worktree you were not pointed at is
+someone else's workspace, possibly with a session live in it right now. If you believe a
+different worktree is genuinely needed, say so and wait for an answer — do not act and report
+afterwards.
+
+This holds even when git would succeed and even when it looks tidy. Switching a worktree moves
+files under an editor the user has open. Creating a scratch worktree leaves clutter they must
+find and remove. The cost lands on them, not on you, and it is invisible from inside the task.
+
+**Never `git stash` files you did not create**, and never stash to satisfy a tool that demands a
+clean tree. Stashed work disappears from the user's editor and file manager with no trace they
+would think to look for; they can lose access to their own in-progress work while you carry on.
+If a command needs a clean tree, name the files that are in the way and ask.
+
+Treat another session's uncommitted, untracked, or staged files as strictly read-only — do not
+commit, move, revert, format, or clean them, and do not fold them into your own commits.
+
+The one decision that *is* yours to raise: as with testing, ask once per work-stream whether to
+work in an isolated branch or the current checkout; don't re-ask per task.
 
 ## Independent review before hand-off
 When you start a distinct body of work (a new plan/epic, or the first code-changing turn),
