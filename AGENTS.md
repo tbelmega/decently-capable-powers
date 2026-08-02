@@ -96,16 +96,31 @@ the review without waiting for the user to remind you.
 If the requested handoff state prevents review, preserve that state and report review as `NOT RUN`.
 
 ## Completion receipt
-Begin the final handoff of a distinct body of work with these
-three lines, adding concise command, HEAD, URL, or review-artifact evidence after the status:
+**End** the final handoff of a distinct body of work with these four lines — they are the last
+thing you print, after the prose. In a terminal the final lines are what the user sees without
+scrolling, so status lands at a glance; this is the one place the "asks first, evidence behind"
+ordering is deliberately inverted. Keep the explanatory summary of what changed above it.
+Add concise command, HEAD, URL, or review-artifact evidence after each status:
 
     IMPLEMENTATION: COMPLETE|INCOMPLETE
     VERIFICATION: PASSED|FAILED|NOT RUN
     REVIEW: PASSED|REQUESTED|BLOCKED|NOT CONFIGURED|WAIVED|NOT RUN
+    NEXT STEP/OPTIONS: <what happens next, or the alternatives when it is the user's call>
 
 `REQUESTED` means an asynchronous tool or human has the review but has not completed it; `WAIVED`
 requires the user's explicit opt-out. Never claim the overall work complete when its
 required review has not passed.
+
+`NEXT STEP/OPTIONS` is mandatory. When the work is cleanly finished, one line naming the single
+next action is enough. When anything is unresolved — review blocked or capped, verification
+failed, implementation incomplete — enumerate the **real alternatives with their consequences**,
+including the option of doing nothing. Never present "authorize more of what I was doing" as the
+only way forward; the user must be able to choose an exit without inferring it.
+
+**Before printing the receipt, leave any tracked item in a state that is still accurate if the
+user never replies.** Never park work in a state that presumes an approval you have not received.
+The user must be free to close the conversation at that exact point without leaving a tracker
+stale or a claim overstated.
 
 ## Context hygiene
 Externalize durable state — plans, decisions, research, progress — to files as you go; long

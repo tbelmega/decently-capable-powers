@@ -57,12 +57,14 @@ turn it started passing · tired and wanting the work over.
 
 ## Completion Receipt
 
-When about to claim work is complete, lead with the always-on three-line receipt.
+When about to claim work is complete, **close** with the always-on four-line receipt — it is the
+last thing you print, below the prose, so the status is visible without scrolling.
 
 ```text
 IMPLEMENTATION: COMPLETE|INCOMPLETE
 VERIFICATION: PASSED|FAILED|NOT RUN
 REVIEW: PASSED|REQUESTED|BLOCKED|NOT CONFIGURED|WAIVED|NOT RUN
+NEXT STEP/OPTIONS: <the next action, or the alternatives when it is the user's call>
 ```
 
 Attach compact evidence to each applicable line: the verification command and result; and the
@@ -71,6 +73,12 @@ configured terminal signal was freshly checked for the complete work. `REQUESTED
 means an asynchronous tool or human review is pending. `WAIVED` means the user explicitly opted
 out. `NOT RUN` and `BLOCKED` are honest handoff states, never synonyms for completion when review
 is required.
+
+`NEXT STEP/OPTIONS` states the single next action when the work is cleanly done, and enumerates
+the real alternatives with their consequences when it is not — including doing nothing. Asking
+for more of what you were already doing is never the only listed option. Before printing the
+receipt, leave any tracked item accurate as of that moment, so the user can close the
+conversation there without leaving a tracker stale.
 
 ## Bottom Line
 
