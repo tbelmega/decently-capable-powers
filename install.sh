@@ -44,13 +44,19 @@ END_MARK='DCP:END'
 link_skills() {
   local target_root="$1"
   mkdir -p "$target_root"
-  local linked=0 current=0
+  local linked=0 repaired=0 current=0
   for skill_dir in "$REPO_DIR"/skills/*/; do
     local name link
     name="$(basename "$skill_dir")"
     link="$target_root/$name"
     if [ -L "$link" ] && [ "$(readlink -f "$link")" = "$(readlink -f "$skill_dir")" ]; then
       current=$((current + 1))
+    elif [ -L "$link" ] && [ ! -e "$link" ]; then
+      # Dangling: the target is gone, most often this repo under its previous path
+      # or name. Repointing clobbers no live content, and it is the only way a
+      # rerun repairs a profile that drifted — a link left as-is stays unloadable.
+      ln -sfn "${skill_dir%/}" "$link"
+      repaired=$((repaired + 1))
     elif [ -e "$link" ] || [ -L "$link" ]; then
       echo "  ! $link exists and is not a link to this repo — left untouched"
     else
@@ -58,7 +64,7 @@ link_skills() {
       linked=$((linked + 1))
     fi
   done
-  echo "  $target_root: $linked newly linked, $current already current"
+  echo "  $target_root: $linked newly linked, $repaired repaired, $current already current"
 }
 
 # Seed gitignored personal config: for every skills/*/<base>.template.md,

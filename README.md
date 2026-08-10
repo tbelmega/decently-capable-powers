@@ -73,7 +73,8 @@ Running several Claude Code profiles (`CLAUDE_CONFIG_DIR=~/.claude-<name>`)? The
 block reaches every profile whose `CLAUDE.md` already carries the marker, but skills need the
 profile named: `./install.sh --config-dir ~/.claude-work --config-dir ~/.claude-personal`
 links them there too, on top of the default targets. Without it, those profiles' skill links
-are hand-made and no update ever refreshes them.
+are hand-made and no update ever refreshes them. A rerun repoints links left dangling by a
+repo move or rename; a link pointing at live content elsewhere is reported and left alone.
 
 **One post-install step:** install.sh seeds `skills/model-selection/roster.local.md` from its
 template — edit it with your harnesses/subscriptions, model sweet spots, and standing
