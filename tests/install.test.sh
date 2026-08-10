@@ -8,8 +8,9 @@
 # the installer it runs from — the real checkout, if the real installer were used.
 #
 # Portability: POSIX shell builtins, readlink without -f, and globs only. No GNU
-# find extensions (-printf, -lname, -xtype), because install.sh supports macOS
-# and BSD find lacks them.
+# find extensions (-printf, -lname, -xtype) and no `readlink -f`, because install.sh
+# supports macOS, whose BSD find and readlink lack them. Assertions stay inside the
+# sandbox — nothing may depend on host state such as an existing /skills.
 #
 # Run: ./tests/install.test.sh   (exit 0 = all cases pass; failures are listed)
 
@@ -77,8 +78,16 @@ case "$out" in *"requires a non-empty directory"*) ok "missing value names the f
   *) fail "missing value message unexpected: $out";; esac
 out="$(HOME="$home" "$install_sh" --config-dir "" 2>&1)"; status=$?
 check "empty value exits nonzero" "1" "$status"
-if [ -e /skills ]; then fail "empty value created /skills"; else ok "empty value did not target /skills"; fi
 check "no default targets written on a rejected run" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
+
+# A forgotten value leaves the next option as $2. Run from inside the sandbox so a
+# relative target ("--repair-links/skills") would be created here and be visible.
+out="$(cd "$sandbox" && HOME="$home" "$install_sh" --config-dir --repair-links 2>&1)"; status=$?
+check "option token as value exits nonzero" "1" "$status"
+case "$out" in *"is not an option"*) ok "option-token rejection is explained";;
+  *) fail "option-token message unexpected: $out";; esac
+check "no default targets written on the rejected run" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
+check "no relative target directory created" "0" "$([ -e "$sandbox/--repair-links" ] && echo 1 || echo 0)"
 out="$(HOME="$home" "$install_sh" --bogus 2>&1)"; status=$?
 check "unknown flag exits nonzero" "1" "$status"
 case "$out" in *"usage: install.sh"*) ok "unknown flag prints usage";; *) fail "no usage line: $out";; esac
@@ -143,8 +152,9 @@ check "dangling foreign link also repointed under the explicit flag" "$fixture/s
 check "live foreign link still untouched" "$sandbox/elsewhere/research" "$(link_target "$profile/skills/research")"
 case "$out" in *"is not a link to this repo — left untouched"*) ok "live foreign link is reported";;
   *) fail "live foreign link was not reported";; esac
-case "$out" in *"was dangling"*) ok "each repair reports the target it replaced";;
-  *) fail "repair did not report the replaced target";; esac
+case "$out" in *"was dangling: $sandbox/gone/skills/brainstorming"*)
+    ok "repair reports the exact target it replaced";;
+  *) fail "repair did not report the exact replaced target";; esac
 check "no dangling links remain" "0" "$(count_dangling "$profile/skills")"
 rm -rf "$sandbox"
 
