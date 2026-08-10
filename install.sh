@@ -132,8 +132,11 @@ passthrough_args=()
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --config-dir)
-      if [ "$#" -lt 2 ]; then
-        echo "--config-dir requires a directory argument" >&2
+      # An empty value is a mistake, not a target: it would send link_skills at
+      # /skills. Reject it here, before the default targets are touched, so a
+      # bad invocation is all-or-nothing rather than half-applied.
+      if [ "$#" -lt 2 ] || [ -z "$2" ]; then
+        echo "--config-dir requires a non-empty directory argument" >&2
         exit 1
       fi
       extra_config_dirs+=("$2")
