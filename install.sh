@@ -221,21 +221,36 @@ for extra_dir in ${extra_config_dirs[@]+"${extra_config_dirs[@]}"}; do
     echo "--config-dir $extra_dir has a skills path that is not a directory" >&2
     exit 1
   fi
-  # The two tests above cannot see every failure: a path under a regular-file
-  # ancestor fails stat with ENOTDIR, so both read as "absent". Creating the target
-  # here is the only complete check, and doing it up front keeps the whole run
-  # all-or-nothing — link_skills' own mkdir -p is then a no-op.
-  if ! mkdir -p "$extra_dir/skills" 2>/dev/null; then
-    echo "--config-dir $extra_dir/skills cannot be created" >&2
+done
+
+# Every skill target — default and supplied alike — must be proven creatable *and*
+# writable before the first link, so no failure can leave some targets installed and
+# others not. Inspecting a path is not enough: `mkdir -p` succeeds on a path that
+# already exists read-only, and a path under a regular file fails only on the
+# attempt. So attempt both, with the same symlink operation link_skills will use.
+default_targets=("$HOME/.claude/skills" "$HOME/.agents/skills")
+extra_targets=()
+for extra_dir in ${extra_config_dirs[@]+"${extra_config_dirs[@]}"}; do
+  extra_targets+=("$extra_dir/skills")
+done
+# Supplied targets are probed first: probing creates the directory, so validating a
+# default before a bad profile path would leave that default behind on the failure.
+for skill_target in ${extra_targets[@]+"${extra_targets[@]}"} "${default_targets[@]}"; do
+  if ! mkdir -p "$skill_target" 2>/dev/null; then
+    echo "$skill_target cannot be created — nothing was installed" >&2
     exit 1
   fi
+  probe="$skill_target/.dcp-write-probe.$$"
+  if ! ln -s /dev/null "$probe" 2>/dev/null; then
+    echo "$skill_target is not writable — nothing was installed" >&2
+    exit 1
+  fi
+  rm -f "$probe"
 done
 
 echo "Skills (symlinked; edits in the repo are live immediately):"
-link_skills "$HOME/.claude/skills"
-link_skills "$HOME/.agents/skills"
-for extra_dir in ${extra_config_dirs[@]+"${extra_config_dirs[@]}"}; do
-  link_skills "$extra_dir/skills"
+for skill_target in "${default_targets[@]}" ${extra_targets[@]+"${extra_targets[@]}"}; do
+  link_skills "$skill_target"
 done
 
 echo "Personal config (gitignored *.local.md, reaches all harnesses via the symlinks):"

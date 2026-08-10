@@ -114,6 +114,22 @@ out="$(HOME="$home" "$install_sh" --config-dir "$sandbox/profile-bad-skills" 2>&
 check "config dir whose skills path is a file exits nonzero" "1" "$status"
 check "no default targets written for an unusable skills path" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
 
+# An existing but unwritable skills directory passes mkdir -p, which creates
+# nothing — only attempting a link proves it. (root ignores mode bits, so skip.)
+if [ "$(id -u)" -ne 0 ]; then
+  mkdir -p "$sandbox/profile-readonly/skills"
+  chmod 555 "$sandbox/profile-readonly/skills"
+  out="$(HOME="$home" "$install_sh" --config-dir "$sandbox/profile-readonly" 2>&1)"; status=$?
+  check "unwritable skills dir exits nonzero" "1" "$status"
+  case "$out" in *"is not writable"*) ok "unwritable target is explained";;
+    *) fail "unwritable message unexpected: $out";; esac
+  check "no default targets written for an unwritable target" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
+  check "no probe left behind" "0" "$(set -- "$sandbox/profile-readonly/skills"/.dcp-write-probe.*; [ -e "$1" ] && echo 1 || echo 0)"
+  chmod 755 "$sandbox/profile-readonly/skills"
+else
+  echo "  skipped: unwritable-directory case (running as root)"
+fi
+
 out="$(HOME="$home" "$install_sh" --bogus 2>&1)"; status=$?
 check "unknown flag exits nonzero" "1" "$status"
 case "$out" in *"usage: install.sh"*) ok "unknown flag prints usage";; *) fail "no usage line: $out";; esac
