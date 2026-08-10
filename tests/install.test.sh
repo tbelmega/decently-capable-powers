@@ -208,19 +208,38 @@ rm -rf "$sandbox"
 if [ -z "${DCP_TEST_NO_RECURSE:-}" ]; then
   echo "harness: an unusable mktemp aborts before any sandbox path is derived"
   stub_dir="$(mktemp -d)" || { echo "FATAL: mktemp -d failed; refusing to run" >&2; exit 2; }
+  witness="$stub_dir/witness"
+
+  # Exit status and diagnostics alone would still pass if the guard were moved below
+  # `mkdir -p "$home" "$fixture"` — the safety property is that *no* filesystem command
+  # runs against an empty-sandbox path, so the child gets the mutating commands stubbed
+  # too and every invocation is recorded here. Only the child's PATH is rewritten; the
+  # parent keeps the real tools.
+  for cmd in mkdir cp rm; do
+    cat > "$stub_dir/$cmd" <<EOF
+#!/bin/sh
+echo "$cmd \$*" >> "$witness"
+exit 0
+EOF
+    chmod +x "$stub_dir/$cmd"
+  done
 
   printf '#!/bin/sh\nexit 1\n' > "$stub_dir/mktemp"
   chmod +x "$stub_dir/mktemp"
+  : > "$witness"
   guard_out="$(DCP_TEST_NO_RECURSE=1 PATH="$stub_dir:$PATH" bash "$TEST_FILE" 2>&1)"
   check "a failing mktemp aborts the run with exit 2" "2" "$?"
   case "$guard_out" in *"FATAL: mktemp -d failed"*) ok "the failing-mktemp branch names itself";;
     *) fail "a failing mktemp produced no FATAL message — got: $guard_out";; esac
+  check "a failing mktemp touches no path" "" "$(cat "$witness")"
 
   printf '#!/bin/sh\nexit 0\n' > "$stub_dir/mktemp"
+  : > "$witness"
   guard_out="$(DCP_TEST_NO_RECURSE=1 PATH="$stub_dir:$PATH" bash "$TEST_FILE" 2>&1)"
   check "an empty mktemp result aborts the run with exit 2" "2" "$?"
   case "$guard_out" in *"produced no usable directory"*) ok "the empty-result branch names itself";;
     *) fail "an empty mktemp result produced no FATAL message — got: $guard_out";; esac
+  check "an empty mktemp result touches no path" "" "$(cat "$witness")"
 
   rm -rf "$stub_dir"
 fi
