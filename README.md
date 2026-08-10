@@ -69,6 +69,12 @@ Skills are symlinked, so repo edits are live immediately; the instruction blocks
 so **update = `git pull && ./install.sh`**. For a repo that wants checked-in, team-visible
 guidance instead: `./install.sh --project <dir>`.
 
+Running several Claude Code profiles (`CLAUDE_CONFIG_DIR=~/.claude-<name>`)? The managed guide
+block reaches every profile whose `CLAUDE.md` already carries the marker, but skills need the
+profile named: `./install.sh --config-dir ~/.claude-work --config-dir ~/.claude-personal`
+links them there too, on top of the default targets. Without it, those profiles' skill links
+are hand-made and no update ever refreshes them.
+
 **One post-install step:** install.sh seeds `skills/model-selection/roster.local.md` from its
 template — edit it with your harnesses/subscriptions, model sweet spots, and standing
 assignments. It is gitignored (personal, never published) and reaches every harness through

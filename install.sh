@@ -17,6 +17,15 @@
 #   - Prints the one manual step for Cursor (no file-based global instructions;
 #     paste into Settings → Rules).
 #
+# --config-dir <dir> (repeatable): also symlink the skills into <dir>/skills.
+#   Use it for each extra Claude profile / CLAUDE_CONFIG_DIR you run — e.g. a
+#   machine with several profiles wires them all in one invocation:
+#     ./install.sh --config-dir ~/.claude-work --config-dir ~/.claude-personal
+#   The default ~/.claude and ~/.agents targets are always linked as well. The
+#   operating-guide block needs no such flag — alternate profiles opt into it by
+#   already carrying the marker — but skills have no marker to opt in with, so
+#   without this flag their links are hand-made and never refreshed.
+#
 # --project <dir>: refresh the managed block in <dir>/AGENTS.md and ensure
 #   <dir>/CLAUDE.md imports it — for repos that want checked-in, team-visible
 #   guidance instead of (or on top of) the user-level install.
@@ -107,17 +116,53 @@ project_install() {
   fi
 }
 
+# Pull optional --config-dir values out of the args; everything else (notably
+# --project and its argument) passes through unchanged. The parallel boolean
+# avoids ${#array[@]} on an empty array, which is unbound under `set -u` in the
+# bash 3.2 that macOS still ships.
+extra_config_dirs=()
+have_extra_config_dirs=false
+passthrough_args=()
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --config-dir)
+      if [ "$#" -lt 2 ]; then
+        echo "--config-dir requires a directory argument" >&2
+        exit 1
+      fi
+      extra_config_dirs+=("$2")
+      have_extra_config_dirs=true
+      shift 2
+      ;;
+    *)
+      passthrough_args+=("$1")
+      shift
+      ;;
+  esac
+done
+set -- ${passthrough_args[@]+"${passthrough_args[@]}"}
+
+USAGE='usage: install.sh [--config-dir <dir>]... | --project <dir>'
+
 if [ "${1:-}" = "--project" ]; then
+  if [ "$have_extra_config_dirs" = true ]; then
+    echo "--config-dir belongs to the user-level install and does nothing with --project" >&2
+    echo "$USAGE" >&2
+    exit 1
+  fi
   project_install "${2:?usage: install.sh --project <dir>}"
   exit 0
 elif [ "${1:-}" != "" ]; then
-  echo "usage: install.sh [--project <dir>]" >&2
+  echo "$USAGE" >&2
   exit 1
 fi
 
 echo "Skills (symlinked; edits in the repo are live immediately):"
 link_skills "$HOME/.claude/skills"
 link_skills "$HOME/.agents/skills"
+for extra_dir in ${extra_config_dirs[@]+"${extra_config_dirs[@]}"}; do
+  link_skills "$extra_dir/skills"
+done
 
 echo "Personal config (gitignored *.local.md, reaches all harnesses via the symlinks):"
 seed_local_files
