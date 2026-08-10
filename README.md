@@ -73,8 +73,16 @@ Running several Claude Code profiles (`CLAUDE_CONFIG_DIR=~/.claude-<name>`)? The
 block reaches every profile whose `CLAUDE.md` already carries the marker, but skills need the
 profile named: `./install.sh --config-dir ~/.claude-work --config-dir ~/.claude-personal`
 links them there too, on top of the default targets. Without it, those profiles' skill links
-are hand-made and no update ever refreshes them. A rerun repoints links left dangling by a
-repo move or rename; a link pointing at live content elsewhere is reported and left alone.
+are hand-made and no update ever refreshes them.
+
+Moving or renaming this checkout leaves the old links dangling, and a skill behind a dangling
+link is silently unloadable. A run reports each one and leaves it in place — a dangling target
+may equally be a foreign checkout on an offline volume, and its path is unrecoverable once
+overwritten. `./install.sh --repair-links` repoints them at this repo; links resolving to live
+content elsewhere are always left alone.
+
+`./tests/install.test.sh` covers the argument surface and both linking behaviors against a
+disposable fixture.
 
 **One post-install step:** install.sh seeds `skills/model-selection/roster.local.md` from its
 template — edit it with your harnesses/subscriptions, model sweet spots, and standing

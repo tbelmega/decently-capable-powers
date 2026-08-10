@@ -1,58 +1,98 @@
 #!/usr/bin/env bash
 # tests/install.test.sh — regression coverage for install.sh's argument handling
-# and skill linking. Every case runs against an isolated HOME under a temp dir, so
-# the suite never reads or writes the real user config.
+# and skill linking.
+#
+# Every case runs a *copy* of the installer inside a temp fixture, with HOME
+# pointed there too. Both halves matter: HOME isolation contains the config
+# writes, and the copy contains seed_local_files, which writes *.local.md next to
+# the installer it runs from — the real checkout, if the real installer were used.
+#
+# Portability: POSIX shell builtins, readlink without -f, and globs only. No GNU
+# find extensions (-printf, -lname, -xtype), because install.sh supports macOS
+# and BSD find lacks them.
 #
 # Run: ./tests/install.test.sh   (exit 0 = all cases pass; failures are listed)
 
 set -uo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-INSTALL="$REPO_DIR/install.sh"
-SKILL_COUNT="$(find "$REPO_DIR/skills" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
 failures=0
 
 fail() { echo "  FAIL: $*"; failures=$((failures + 1)); }
 ok() { echo "  ok: $*"; }
-
-check() { # check <description> <expected> <actual>
+check() { # <description> <expected> <actual>
   if [ "$2" = "$3" ]; then ok "$1"; else fail "$1 — expected '$2', got '$3'"; fi
 }
 
-# Each case gets a fresh isolated HOME; $sandbox and $home are set for the body.
+# A disposable fixture: the installer, the guide it manages, and the skills it
+# links. $fixture/install.sh resolves REPO_DIR to the fixture, so every write the
+# installer makes — links, managed blocks, seeded *.local.md — stays in $sandbox.
 new_sandbox() {
   sandbox="$(mktemp -d)"
   home="$sandbox/home"
-  mkdir -p "$home"
+  fixture="$sandbox/repo"
+  mkdir -p "$home" "$fixture"
+  cp "$REPO_DIR/install.sh" "$fixture/install.sh"
+  cp "$REPO_DIR/AGENTS.md" "$fixture/AGENTS.md"
+  cp -R "$REPO_DIR/skills" "$fixture/skills"
+  install_sh="$fixture/install.sh"
+  skill_count=0
+  for d in "$fixture"/skills/*/; do [ -d "$d" ] && skill_count=$((skill_count + 1)); done
 }
 
-link_target() { readlink "$1" 2>/dev/null || echo "<not a link>"; }
-count_links_into_repo() { # <skills dir>
-  find "$1" -maxdepth 1 -type l -lname "$REPO_DIR/skills/*" 2>/dev/null | wc -l | tr -d ' '
+# Portable link inspection: readlink with no flags prints a symlink's stored
+# target on both GNU and BSD; -L/-e distinguish link, live link, and dangling.
+link_target() { if [ -L "$1" ]; then readlink "$1"; else echo "<not a link>"; fi; }
+
+count_links_into_fixture() { # <skills dir> — links whose target is inside $fixture/skills
+  local n=0 entry
+  for entry in "$1"/*; do
+    [ -L "$entry" ] || continue
+    case "$(readlink "$entry")" in "$fixture/skills/"*) n=$((n + 1));; esac
+  done
+  echo "$n"
+}
+
+list_links() { # <skills dir> — "name target" per line, sorted
+  local entry
+  for entry in "$1"/*; do
+    [ -L "$entry" ] || continue
+    echo "$(basename "$entry") $(readlink "$entry")"
+  done | sort
+}
+
+count_dangling() { # <skills dir>
+  local n=0 entry
+  for entry in "$1"/*; do
+    if [ -L "$entry" ] && [ ! -e "$entry" ]; then n=$((n + 1)); fi
+  done
+  echo "$n"
 }
 
 echo "install.sh: rejects invalid arguments"
 new_sandbox
-out="$(HOME="$home" "$INSTALL" --config-dir 2>&1)"; status=$?
+out="$(HOME="$home" "$install_sh" --config-dir 2>&1)"; status=$?
 check "missing value exits nonzero" "1" "$status"
 case "$out" in *"requires a non-empty directory"*) ok "missing value names the flag";;
   *) fail "missing value message unexpected: $out";; esac
-out="$(HOME="$home" "$INSTALL" --config-dir "" 2>&1)"; status=$?
+out="$(HOME="$home" "$install_sh" --config-dir "" 2>&1)"; status=$?
 check "empty value exits nonzero" "1" "$status"
-[ -e /skills ] && fail "empty value created /skills" || ok "empty value did not target /skills"
+if [ -e /skills ]; then fail "empty value created /skills"; else ok "empty value did not target /skills"; fi
 check "no default targets written on a rejected run" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
-out="$(HOME="$home" "$INSTALL" --bogus 2>&1)"; status=$?
+out="$(HOME="$home" "$install_sh" --bogus 2>&1)"; status=$?
 check "unknown flag exits nonzero" "1" "$status"
 case "$out" in *"usage: install.sh"*) ok "unknown flag prints usage";; *) fail "no usage line: $out";; esac
-out="$(HOME="$home" "$INSTALL" --config-dir "$home/.claude-x" --project "$sandbox" 2>&1)"; status=$?
+out="$(HOME="$home" "$install_sh" --config-dir "$home/.claude-x" --project "$sandbox" 2>&1)"; status=$?
 check "--config-dir with --project exits nonzero" "1" "$status"
-case "$out" in *"does nothing with --project"*) ok "conflict is explained";; *) fail "no conflict message: $out";; esac
+out="$(HOME="$home" "$install_sh" --repair-links --project "$sandbox" 2>&1)"; status=$?
+check "--repair-links with --project exits nonzero" "1" "$status"
+case "$out" in *"do nothing with --project"*) ok "conflict is explained";; *) fail "no conflict message: $out";; esac
 rm -rf "$sandbox"
 
 echo "install.sh: --project leaves the user-level config alone"
 new_sandbox
 mkdir -p "$sandbox/proj"
-HOME="$home" "$INSTALL" --project "$sandbox/proj" >/dev/null 2>&1
+HOME="$home" "$install_sh" --project "$sandbox/proj" >/dev/null 2>&1
 check "--project exits 0" "0" "$?"
 check "AGENTS.md written" "1" "$([ -f "$sandbox/proj/AGENTS.md" ] && echo 1 || echo 0)"
 check "CLAUDE.md imports it" "1" "$(grep -c '@AGENTS.md' "$sandbox/proj/CLAUDE.md")"
@@ -62,35 +102,50 @@ rm -rf "$sandbox"
 echo "install.sh: links every skill into repeated --config-dir targets, including paths with spaces"
 new_sandbox
 spaced="$home/.claude-profile with spaces"
-HOME="$home" "$INSTALL" --config-dir "$spaced" --config-dir "$home/.claude-second" >/dev/null 2>&1
+HOME="$home" "$install_sh" --config-dir "$spaced" --config-dir "$home/.claude-second" >/dev/null 2>&1
 check "run exits 0" "0" "$?"
-check "default ~/.claude linked" "$SKILL_COUNT" "$(count_links_into_repo "$home/.claude/skills")"
-check "default ~/.agents linked" "$SKILL_COUNT" "$(count_links_into_repo "$home/.agents/skills")"
-check "profile with spaces linked" "$SKILL_COUNT" "$(count_links_into_repo "$spaced/skills")"
-check "second profile linked" "$SKILL_COUNT" "$(count_links_into_repo "$home/.claude-second/skills")"
+check "default ~/.claude linked" "$skill_count" "$(count_links_into_fixture "$home/.claude/skills")"
+check "default ~/.agents linked" "$skill_count" "$(count_links_into_fixture "$home/.agents/skills")"
+check "profile with spaces linked" "$skill_count" "$(count_links_into_fixture "$spaced/skills")"
+check "second profile linked" "$skill_count" "$(count_links_into_fixture "$home/.claude-second/skills")"
+check "personal config seeded inside the fixture, not the checkout" "1" \
+  "$([ -f "$fixture/skills/model-selection/roster.local.md" ] && echo 1 || echo 0)"
 
 echo "install.sh: a second run is idempotent"
-before="$(find "$spaced/skills" -maxdepth 1 -type l -printf '%f %l\n' | sort)"
-out="$(HOME="$home" "$INSTALL" --config-dir "$spaced" --config-dir "$home/.claude-second" 2>&1)"
+before="$(list_links "$spaced/skills")"
+out="$(HOME="$home" "$install_sh" --config-dir "$spaced" --config-dir "$home/.claude-second" 2>&1)"
 check "rerun exits 0" "0" "$?"
-check "no links changed" "$before" "$(find "$spaced/skills" -maxdepth 1 -type l -printf '%f %l\n' | sort)"
-case "$out" in *"$SKILL_COUNT already current"*) ok "rerun reports links as current";;
+check "no links changed" "$before" "$(list_links "$spaced/skills")"
+case "$out" in *"$skill_count already current"*) ok "rerun reports links as current";;
   *) fail "rerun did not report current links";; esac
 rm -rf "$sandbox"
 
-echo "install.sh: repairs dangling links, preserves live foreign ones"
+echo "install.sh: leaves dangling links alone by default, names the flag that fixes them"
 new_sandbox
 profile="$home/.claude-drift"
 mkdir -p "$profile/skills" "$sandbox/elsewhere/research"
-ln -s "$sandbox/gone/skills/brainstorming" "$profile/skills/brainstorming"   # dangling: repo moved
-ln -s "$sandbox/elsewhere/research" "$profile/skills/research"               # live: someone else's
-out="$(HOME="$home" "$INSTALL" --config-dir "$profile" 2>&1)"
-check "run exits 0" "0" "$?"
-check "dangling link repointed at this repo" "$REPO_DIR/skills/brainstorming" "$(link_target "$profile/skills/brainstorming")"
+ln -s "$sandbox/gone/skills/brainstorming" "$profile/skills/brainstorming"  # dangling: repo moved
+ln -s "$sandbox/offline/skills/agent-handover" "$profile/skills/agent-handover"  # dangling: foreign, offline
+ln -s "$sandbox/elsewhere/research" "$profile/skills/research"              # live: someone else's
+out="$(HOME="$home" "$install_sh" --config-dir "$profile" 2>&1)"
+check "default run exits 0" "0" "$?"
+check "dangling link untouched by default" "$sandbox/gone/skills/brainstorming" "$(link_target "$profile/skills/brainstorming")"
+check "dangling foreign link untouched by default" "$sandbox/offline/skills/agent-handover" "$(link_target "$profile/skills/agent-handover")"
+case "$out" in *"rerun with --repair-links"*) ok "default run names the repair flag";;
+  *) fail "default run did not name --repair-links";; esac
 check "live foreign link untouched" "$sandbox/elsewhere/research" "$(link_target "$profile/skills/research")"
-case "$out" in *"is not a link to this repo — left untouched"*) ok "foreign link is reported";;
-  *) fail "foreign link was not reported";; esac
-check "no dangling links remain" "0" "$(find "$profile/skills/" -maxdepth 1 -xtype l | wc -l | tr -d ' ')"
+
+echo "install.sh: --repair-links repoints dangling links, still never live ones"
+out="$(HOME="$home" "$install_sh" --config-dir "$profile" --repair-links 2>&1)"
+check "repair run exits 0" "0" "$?"
+check "dangling link repointed at this repo" "$fixture/skills/brainstorming" "$(link_target "$profile/skills/brainstorming")"
+check "dangling foreign link also repointed under the explicit flag" "$fixture/skills/agent-handover" "$(link_target "$profile/skills/agent-handover")"
+check "live foreign link still untouched" "$sandbox/elsewhere/research" "$(link_target "$profile/skills/research")"
+case "$out" in *"is not a link to this repo — left untouched"*) ok "live foreign link is reported";;
+  *) fail "live foreign link was not reported";; esac
+case "$out" in *"was dangling"*) ok "each repair reports the target it replaced";;
+  *) fail "repair did not report the replaced target";; esac
+check "no dangling links remain" "0" "$(count_dangling "$profile/skills")"
 rm -rf "$sandbox"
 
 echo

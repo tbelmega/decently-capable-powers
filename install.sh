@@ -17,6 +17,11 @@
 #   - Prints the one manual step for Cursor (no file-based global instructions;
 #     paste into Settings → Rules).
 #
+# --repair-links: repoint skill links that dangle — the shape drift takes when this
+#   repo is moved or renamed. Off by default: a dangling target could equally be a
+#   foreign checkout on an offline volume, and its path is unrecoverable once
+#   overwritten. A default run reports each dangling link and names this flag.
+#
 # --config-dir <dir> (repeatable): also symlink the skills into <dir>/skills.
 #   Use it for each extra Claude profile / CLAUDE_CONFIG_DIR you run — e.g. a
 #   machine with several profiles wires them all in one invocation:
@@ -51,12 +56,16 @@ link_skills() {
     link="$target_root/$name"
     if [ -L "$link" ] && [ "$(readlink -f "$link")" = "$(readlink -f "$skill_dir")" ]; then
       current=$((current + 1))
-    elif [ -L "$link" ] && [ ! -e "$link" ]; then
-      # Dangling: the target is gone, most often this repo under its previous path
-      # or name. Repointing clobbers no live content, and it is the only way a
-      # rerun repairs a profile that drifted — a link left as-is stays unloadable.
+    elif [ -L "$link" ] && [ ! -e "$link" ] && [ "$repair_dangling" = true ]; then
       ln -sfn "${skill_dir%/}" "$link"
+      echo "  ~ $link repointed at this repo (was dangling: $(readlink "$link" 2>/dev/null))"
       repaired=$((repaired + 1))
+    elif [ -L "$link" ] && [ ! -e "$link" ]; then
+      # A dangling target carries no provenance: it may be this repo under a
+      # previous path, or a foreign checkout on a volume that is merely offline.
+      # Guessing would silently discard the latter, so name the fix instead.
+      echo "  ! $link is dangling (-> $(readlink "$link")) and its skill is unloadable"
+      echo "    rerun with --repair-links to point it at this repo"
     elif [ -e "$link" ] || [ -L "$link" ]; then
       echo "  ! $link exists and is not a link to this repo — left untouched"
     else
@@ -128,9 +137,14 @@ project_install() {
 # bash 3.2 that macOS still ships.
 extra_config_dirs=()
 have_extra_config_dirs=false
+repair_dangling=false
 passthrough_args=()
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    --repair-links)
+      repair_dangling=true
+      shift
+      ;;
     --config-dir)
       # An empty value is a mistake, not a target: it would send link_skills at
       # /skills. Reject it here, before the default targets are touched, so a
@@ -151,11 +165,11 @@ while [ "$#" -gt 0 ]; do
 done
 set -- ${passthrough_args[@]+"${passthrough_args[@]}"}
 
-USAGE='usage: install.sh [--config-dir <dir>]... | --project <dir>'
+USAGE='usage: install.sh [--config-dir <dir>]... [--repair-links] | --project <dir>'
 
 if [ "${1:-}" = "--project" ]; then
-  if [ "$have_extra_config_dirs" = true ]; then
-    echo "--config-dir belongs to the user-level install and does nothing with --project" >&2
+  if [ "$have_extra_config_dirs" = true ] || [ "$repair_dangling" = true ]; then
+    echo "--config-dir and --repair-links belong to the user-level install and do nothing with --project" >&2
     echo "$USAGE" >&2
     exit 1
   fi
