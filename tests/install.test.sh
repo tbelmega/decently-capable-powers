@@ -37,6 +37,14 @@ new_sandbox() {
     echo "FATAL: mktemp -d produced no usable directory; refusing to run" >&2
     exit 2
   fi
+  # Guard-probe runs (below) only ever want to know whether the two checks above fire.
+  # Stopping here keeps a child whose guard has regressed from reaching any case: the
+  # cases write with shell redirection and ln, which no PATH stub can intercept, and
+  # with an empty $sandbox those destinations are host-root paths.
+  if [ -n "${DCP_TEST_GUARD_PROBE:-}" ]; then
+    echo "guard probe: sandbox accepted, stopping before any case runs" >&2
+    exit 3
+  fi
   home="$sandbox/home"
   fixture="$sandbox/repo"
   mkdir -p "$home" "$fixture"
@@ -210,11 +218,13 @@ if [ -z "${DCP_TEST_NO_RECURSE:-}" ]; then
   stub_dir="$(mktemp -d)" || { echo "FATAL: mktemp -d failed; refusing to run" >&2; exit 2; }
   witness="$stub_dir/witness"
 
-  # Exit status and diagnostics alone would still pass if the guard were moved below
-  # `mkdir -p "$home" "$fixture"` — the safety property is that *no* filesystem command
-  # runs against an empty-sandbox path, so the child gets the mutating commands stubbed
-  # too and every invocation is recorded here. Only the child's PATH is rewritten; the
-  # parent keeps the real tools.
+  # Two layers, because each covers what the other cannot. DCP_TEST_GUARD_PROBE stops the
+  # child inside new_sandbox, so a child whose guard has regressed never reaches a case —
+  # the cases write via shell redirection and ln, which PATH stubs cannot intercept, and
+  # against an empty $sandbox those land on host-root paths. The stubs below then cover
+  # what the probe cannot: they record any mutating command run *before* the guard, which
+  # is the regression exit status and diagnostics alone would miss. Only the child's PATH
+  # is rewritten; the parent keeps the real tools.
   for cmd in mkdir cp rm; do
     cat > "$stub_dir/$cmd" <<EOF
 #!/bin/sh
@@ -227,7 +237,7 @@ EOF
   printf '#!/bin/sh\nexit 1\n' > "$stub_dir/mktemp"
   chmod +x "$stub_dir/mktemp"
   : > "$witness"
-  guard_out="$(DCP_TEST_NO_RECURSE=1 PATH="$stub_dir:$PATH" bash "$TEST_FILE" 2>&1)"
+  guard_out="$(DCP_TEST_NO_RECURSE=1 DCP_TEST_GUARD_PROBE=1 PATH="$stub_dir:$PATH" bash "$TEST_FILE" 2>&1)"
   check "a failing mktemp aborts the run with exit 2" "2" "$?"
   case "$guard_out" in *"FATAL: mktemp -d failed"*) ok "the failing-mktemp branch names itself";;
     *) fail "a failing mktemp produced no FATAL message — got: $guard_out";; esac
@@ -235,7 +245,7 @@ EOF
 
   printf '#!/bin/sh\nexit 0\n' > "$stub_dir/mktemp"
   : > "$witness"
-  guard_out="$(DCP_TEST_NO_RECURSE=1 PATH="$stub_dir:$PATH" bash "$TEST_FILE" 2>&1)"
+  guard_out="$(DCP_TEST_NO_RECURSE=1 DCP_TEST_GUARD_PROBE=1 PATH="$stub_dir:$PATH" bash "$TEST_FILE" 2>&1)"
   check "an empty mktemp result aborts the run with exit 2" "2" "$?"
   case "$guard_out" in *"produced no usable directory"*) ok "the empty-result branch names itself";;
     *) fail "an empty mktemp result produced no FATAL message — got: $guard_out";; esac
