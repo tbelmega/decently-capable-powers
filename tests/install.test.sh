@@ -17,6 +17,7 @@
 set -uo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TEST_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 failures=0
 
 fail() { echo "  FAIL: $*"; failures=$((failures + 1)); }
@@ -199,6 +200,30 @@ case "$out" in *"was dangling: $sandbox/gone/skills/brainstorming"*)
   *) fail "repair did not report the exact replaced target";; esac
 check "no dangling links remain" "0" "$(count_dangling "$profile/skills")"
 rm -rf "$sandbox"
+
+# new_sandbox's own guard is the only thing between a failed mktemp and paths derived
+# from an empty $sandbox — /home and /repo, written to and later rm -rf'd. Proving it
+# fires means re-running this very file with mktemp stubbed out; DCP_TEST_NO_RECURSE
+# keeps the child from reaching this case, whatever the stub does upstream of it.
+if [ -z "${DCP_TEST_NO_RECURSE:-}" ]; then
+  echo "harness: an unusable mktemp aborts before any sandbox path is derived"
+  stub_dir="$(mktemp -d)" || { echo "FATAL: mktemp -d failed; refusing to run" >&2; exit 2; }
+
+  printf '#!/bin/sh\nexit 1\n' > "$stub_dir/mktemp"
+  chmod +x "$stub_dir/mktemp"
+  guard_out="$(DCP_TEST_NO_RECURSE=1 PATH="$stub_dir:$PATH" bash "$TEST_FILE" 2>&1)"
+  check "a failing mktemp aborts the run with exit 2" "2" "$?"
+  case "$guard_out" in *"FATAL: mktemp -d failed"*) ok "the failing-mktemp branch names itself";;
+    *) fail "a failing mktemp produced no FATAL message — got: $guard_out";; esac
+
+  printf '#!/bin/sh\nexit 0\n' > "$stub_dir/mktemp"
+  guard_out="$(DCP_TEST_NO_RECURSE=1 PATH="$stub_dir:$PATH" bash "$TEST_FILE" 2>&1)"
+  check "an empty mktemp result aborts the run with exit 2" "2" "$?"
+  case "$guard_out" in *"produced no usable directory"*) ok "the empty-result branch names itself";;
+    *) fail "an empty mktemp result produced no FATAL message — got: $guard_out";; esac
+
+  rm -rf "$stub_dir"
+fi
 
 echo
 if [ "$failures" -eq 0 ]; then echo "All install.sh cases passed."; else echo "$failures check(s) failed."; fi
