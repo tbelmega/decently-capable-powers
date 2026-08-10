@@ -209,6 +209,20 @@ elif [ "${1:-}" != "" ]; then
   exit 1
 fi
 
+# A supplied profile path must be proven usable *before* anything is linked.
+# link_skills would otherwise fail at mkdir -p on a file or a dangling link — after
+# the default targets had already been rewritten, leaving a partial install.
+for extra_dir in ${extra_config_dirs[@]+"${extra_config_dirs[@]}"}; do
+  if { [ -e "$extra_dir" ] || [ -L "$extra_dir" ]; } && [ ! -d "$extra_dir" ]; then
+    echo "--config-dir $extra_dir exists but is not a directory" >&2
+    exit 1
+  fi
+  if { [ -e "$extra_dir/skills" ] || [ -L "$extra_dir/skills" ]; } && [ ! -d "$extra_dir/skills" ]; then
+    echo "--config-dir $extra_dir has a skills path that is not a directory" >&2
+    exit 1
+  fi
+done
+
 echo "Skills (symlinked; edits in the repo are live immediately):"
 link_skills "$HOME/.claude/skills"
 link_skills "$HOME/.agents/skills"

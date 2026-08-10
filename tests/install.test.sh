@@ -88,6 +88,22 @@ case "$out" in *"is not an option"*) ok "option-token rejection is explained";;
   *) fail "option-token message unexpected: $out";; esac
 check "no default targets written on the rejected run" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
 check "no relative target directory created" "0" "$([ -e "$sandbox/--repair-links" ] && echo 1 || echo 0)"
+# An unusable profile path must be caught before the default targets are written.
+printf 'not a directory\n' > "$sandbox/a-file"
+out="$(HOME="$home" "$install_sh" --config-dir "$sandbox/a-file" 2>&1)"; status=$?
+check "config dir that is a file exits nonzero" "1" "$status"
+case "$out" in *"is not a directory"*) ok "non-directory target is explained";;
+  *) fail "non-directory message unexpected: $out";; esac
+check "no default targets written for a non-directory target" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
+ln -s "$sandbox/nowhere" "$sandbox/dangling-profile"
+out="$(HOME="$home" "$install_sh" --config-dir "$sandbox/dangling-profile" 2>&1)"; status=$?
+check "dangling config dir exits nonzero" "1" "$status"
+check "no default targets written for a dangling target" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
+mkdir -p "$sandbox/profile-bad-skills"; printf 'x\n' > "$sandbox/profile-bad-skills/skills"
+out="$(HOME="$home" "$install_sh" --config-dir "$sandbox/profile-bad-skills" 2>&1)"; status=$?
+check "config dir whose skills path is a file exits nonzero" "1" "$status"
+check "no default targets written for an unusable skills path" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
+
 out="$(HOME="$home" "$install_sh" --bogus 2>&1)"; status=$?
 check "unknown flag exits nonzero" "1" "$status"
 case "$out" in *"usage: install.sh"*) ok "unknown flag prints usage";; *) fail "no usage line: $out";; esac
