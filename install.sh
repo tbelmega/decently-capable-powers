@@ -221,6 +221,14 @@ for extra_dir in ${extra_config_dirs[@]+"${extra_config_dirs[@]}"}; do
     echo "--config-dir $extra_dir has a skills path that is not a directory" >&2
     exit 1
   fi
+  # The two tests above cannot see every failure: a path under a regular-file
+  # ancestor fails stat with ENOTDIR, so both read as "absent". Creating the target
+  # here is the only complete check, and doing it up front keeps the whole run
+  # all-or-nothing — link_skills' own mkdir -p is then a no-op.
+  if ! mkdir -p "$extra_dir/skills" 2>/dev/null; then
+    echo "--config-dir $extra_dir/skills cannot be created" >&2
+    exit 1
+  fi
 done
 
 echo "Skills (symlinked; edits in the repo are live immediately):"

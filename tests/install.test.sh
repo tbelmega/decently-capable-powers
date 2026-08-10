@@ -29,7 +29,13 @@ check() { # <description> <expected> <actual>
 # links. $fixture/install.sh resolves REPO_DIR to the fixture, so every write the
 # installer makes — links, managed blocks, seeded *.local.md — stays in $sandbox.
 new_sandbox() {
-  sandbox="$(mktemp -d)"
+  # Deriving paths from an empty $sandbox would compute /home and /repo and write
+  # there, so a failed mktemp must abort before any path is built from it.
+  sandbox="$(mktemp -d)" || { echo "FATAL: mktemp -d failed; refusing to run" >&2; exit 2; }
+  if [ -z "$sandbox" ] || [ ! -d "$sandbox" ]; then
+    echo "FATAL: mktemp -d produced no usable directory; refusing to run" >&2
+    exit 2
+  fi
   home="$sandbox/home"
   fixture="$sandbox/repo"
   mkdir -p "$home" "$fixture"
@@ -99,6 +105,10 @@ ln -s "$sandbox/nowhere" "$sandbox/dangling-profile"
 out="$(HOME="$home" "$install_sh" --config-dir "$sandbox/dangling-profile" 2>&1)"; status=$?
 check "dangling config dir exits nonzero" "1" "$status"
 check "no default targets written for a dangling target" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
+printf 'not a directory\n' > "$sandbox/ancestor-file"
+out="$(HOME="$home" "$install_sh" --config-dir "$sandbox/ancestor-file/child" 2>&1)"; status=$?
+check "config dir under a file ancestor exits nonzero" "1" "$status"
+check "no default targets written for a file ancestor" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
 mkdir -p "$sandbox/profile-bad-skills"; printf 'x\n' > "$sandbox/profile-bad-skills/skills"
 out="$(HOME="$home" "$install_sh" --config-dir "$sandbox/profile-bad-skills" 2>&1)"; status=$?
 check "config dir whose skills path is a file exits nonzero" "1" "$status"
