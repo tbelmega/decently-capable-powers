@@ -73,7 +73,10 @@ link_destination() {
 # moment one cannot be looked inside, the verdict is unknown rather than absent. A regular
 # file mid-path (ENOTDIR) is definitive too — nothing can exist below it.
 target_state() {
-  local target="$1" cur rest component
+  local target="$1" depth="${2:-0}" cur rest component
+  # A symlink chain long enough to hit this is either a loop or beyond reasonable nesting;
+  # either way we no longer know what the target is, so refuse to call it absent.
+  if [ "$depth" -ge 20 ]; then printf 'unknown\n'; return; fi
   if [ -e "$target" ]; then printf 'present\n'; return; fi
   case "$target" in
     /*) cur=""; rest="${target#/}" ;;
@@ -84,7 +87,13 @@ target_state() {
     if [ "$component" = "$rest" ]; then rest=""; else rest="${rest#*/}"; fi
     [ -n "$component" ] || continue
     cur="$cur/$component"
-    if [ ! -e "$cur" ]; then printf 'absent\n'; return; fi
+    if [ ! -e "$cur" ]; then
+      # An existing symlink that does not resolve is not evidence of absence: its own
+      # destination may merely be unreachable. Judge that destination by the same rules,
+      # so a genuinely broken chain still ends in absent and a blocked one in unknown.
+      if [ -L "$cur" ]; then target_state "$(link_destination "$cur")" "$((depth + 1))"; return; fi
+      printf 'absent\n'; return
+    fi
     if [ -n "$rest" ]; then
       if [ ! -d "$cur" ]; then printf 'absent\n'; return; fi
       if [ ! -x "$cur" ]; then printf 'unknown\n'; return; fi

@@ -235,6 +235,30 @@ if [ "$(id -u)" -ne 0 ]; then
     "$(link_target "$profile/skills/brainstorming")"
   chmod 755 "$sandbox/vault"
   rm -rf "$sandbox"
+
+  # The blocked directory need not be named in the link: reaching it through a symlink
+  # component hides it just as well, and `test -e` fails on that component too.
+  echo "install.sh: a target reached through a symlink into an unsearchable directory is not repaired"
+  new_sandbox
+  profile="$home/.claude-indirect"
+  mkdir -p "$profile/skills" "$sandbox/private/vault/live-skill"
+  ln -s "$sandbox/private/vault" "$sandbox/vault-link"
+  ln -s "$sandbox/vault-link/live-skill" "$profile/skills/research"
+  # A symlink loop is unknowable for a different reason; it must not be repaired either.
+  ln -s "$sandbox/loop-b/skill" "$sandbox/loop-a"
+  ln -s "$sandbox/loop-a/skill" "$sandbox/loop-b"
+  ln -s "$sandbox/loop-a/skill" "$profile/skills/brainstorming"
+  chmod 000 "$sandbox/private"
+  check "the indirect target is indistinguishable from dangling" "1" \
+    "$([ -L "$profile/skills/research" ] && [ ! -e "$profile/skills/research" ] && echo 1 || echo 0)"
+  out="$(HOME="$home" "$install_sh" --config-dir "$profile" --repair-links 2>&1)"
+  check "repair run exits 0" "0" "$?"
+  check "the symlink-mediated link keeps its target" "$sandbox/vault-link/live-skill" \
+    "$(link_target "$profile/skills/research")"
+  check "the looping link keeps its target" "$sandbox/loop-a/skill" \
+    "$(link_target "$profile/skills/brainstorming")"
+  chmod 755 "$sandbox/private"
+  rm -rf "$sandbox"
 else
   echo "  skipped: unsearchable-ancestor case (running as root)"
 fi
