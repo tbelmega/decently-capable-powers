@@ -58,6 +58,15 @@ canonical_dir() {
   ( cd -P "$path" 2>/dev/null && pwd -P ) || printf '%s\n' "$path"
 }
 
+# A symlink's identity, independent of how the path was spelled: its parent canonicalised,
+# plus its own name. `./loop-a`, `alias/../loop-a` and `/abs/loop-a` are one link, and cycle
+# detection has to see them as one — comparing the raw strings would let an aliased loop
+# spin until the hop limit and be misreported as an over-long chain.
+link_identity() {
+  local link="$1"
+  printf '%s/%s\n' "$(canonical_dir "$(dirname "$link")")" "$(basename "$link")"
+}
+
 # The stored target of a symlink, made absolute against the link's own directory
 # so a relative link compares correctly.
 link_destination() {
@@ -95,10 +104,12 @@ target_state() {
         # Only a component we have already followed proves a cycle. Chain length does not:
         # a long chain ending in a missing path is provably dangling and must stay
         # repairable, so the hop limit sits above what the kernel itself resolves.
-        if printf '%s\n' "$visited" | grep -qxF -- "$cur"; then printf 'unknown:loop\n'; return; fi
+        local identity
+        identity="$(link_identity "$cur")"
+        if printf '%s\n' "$visited" | grep -qxF -- "$identity"; then printf 'unknown:loop\n'; return; fi
         if [ "$hops" -ge "$LINK_HOP_LIMIT" ]; then printf 'unknown:depth\n'; return; fi
         target_state "$(link_destination "$cur")" "$((hops + 1))" "$visited
-$cur"
+$identity"
         return
       fi
       printf 'absent\n'; return

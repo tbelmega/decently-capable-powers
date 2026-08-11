@@ -267,6 +267,26 @@ else
   echo "  skipped: unsearchable-ancestor cases (running as root)"
 fi
 
+# The same link spelled two ways is still one link. A cycle that comes back through an
+# equivalent spelling must be recognised as a cycle, not run out the hop limit and be
+# reported as an over-long chain — the operator would be told the wrong thing to fix.
+echo "install.sh: a loop that closes through an aliased path is reported as a loop"
+new_sandbox
+profile="$home/.claude-alias"
+mkdir -p "$profile/skills"
+# Relative targets: resolving each hop against its link's own directory grows a fresh "./"
+# prefix every time round, so the same two links never produce the same path string twice.
+ln -s "./loop-b/skill" "$sandbox/loop-a"
+ln -s "./loop-a/skill" "$sandbox/loop-b"
+ln -s "$sandbox/loop-a/skill" "$profile/skills/brainstorming"
+out="$(HOME="$home" "$install_sh" --config-dir "$profile" --repair-links 2>&1)"
+check "repair run exits 0" "0" "$?"
+check "the aliased loop keeps its target" "$sandbox/loop-a/skill" \
+  "$(link_target "$profile/skills/brainstorming")"
+case "$out" in *"symlink chain loops"*) ok "the aliased loop is reported as a loop";;
+  *) fail "the aliased loop was not reported as a loop — got: $out";; esac
+rm -rf "$sandbox"
+
 # Chain length alone proves nothing: a long chain ending in a missing path is as dangling as
 # a short one, and --repair-links promised to repair every dangling link.
 echo "install.sh: a long but cycle-free dangling chain is still repaired"
