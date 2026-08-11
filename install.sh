@@ -45,6 +45,9 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GUIDE="$REPO_DIR/AGENTS.md"
 START_MARK='DCP:START'
 END_MARK='DCP:END'
+# Above Linux's 40-hop and BSD's 32-hop resolution limits, so any chain the kernel itself
+# would follow is still classified on its merits rather than cut short as indeterminate.
+LINK_HOP_LIMIT=64
 
 # Canonical path of an existing directory, without readlink -f — BSD readlink (macOS)
 # has no such option. `cd -P` + `pwd -P` is POSIX and resolves symlinked parents the
@@ -73,10 +76,7 @@ link_destination() {
 # moment one cannot be looked inside, the verdict is unknown rather than absent. A regular
 # file mid-path (ENOTDIR) is definitive too — nothing can exist below it.
 target_state() {
-  local target="$1" depth="${2:-0}" cur rest component
-  # A symlink chain long enough to hit this is either a loop or beyond reasonable nesting;
-  # either way we no longer know what the target is, so refuse to call it absent.
-  if [ "$depth" -ge 20 ]; then printf 'unknown\n'; return; fi
+  local target="$1" hops="${2:-0}" visited="${3:-}" cur rest component
   if [ -e "$target" ]; then printf 'present\n'; return; fi
   case "$target" in
     /*) cur=""; rest="${target#/}" ;;
@@ -91,12 +91,21 @@ target_state() {
       # An existing symlink that does not resolve is not evidence of absence: its own
       # destination may merely be unreachable. Judge that destination by the same rules,
       # so a genuinely broken chain still ends in absent and a blocked one in unknown.
-      if [ -L "$cur" ]; then target_state "$(link_destination "$cur")" "$((depth + 1))"; return; fi
+      if [ -L "$cur" ]; then
+        # Only a component we have already followed proves a cycle. Chain length does not:
+        # a long chain ending in a missing path is provably dangling and must stay
+        # repairable, so the hop limit sits above what the kernel itself resolves.
+        if printf '%s\n' "$visited" | grep -qxF -- "$cur"; then printf 'unknown:loop\n'; return; fi
+        if [ "$hops" -ge "$LINK_HOP_LIMIT" ]; then printf 'unknown:depth\n'; return; fi
+        target_state "$(link_destination "$cur")" "$((hops + 1))" "$visited
+$cur"
+        return
+      fi
       printf 'absent\n'; return
     fi
     if [ -n "$rest" ]; then
       if [ ! -d "$cur" ]; then printf 'absent\n'; return; fi
-      if [ ! -x "$cur" ]; then printf 'unknown\n'; return; fi
+      if [ ! -x "$cur" ]; then printf 'unknown:permission\n'; return; fi
     fi
   done
   printf 'present\n'
@@ -116,12 +125,19 @@ link_skills() {
     if [ -L "$link" ] && [ -e "$link" ] &&
        [ "$(canonical_dir "$(link_destination "$link")")" = "$(canonical_dir "${skill_dir%/}")" ]; then
       current=$((current + 1))
-    elif [ "$state" = unknown ]; then
-      # Not provably dangling: a directory on the path denies search, so the target may
-      # well be live foreign content. Replacing it would discard the only record of where
-      # it pointed, so this stays untouched even under --repair-links.
-      echo "  ! $link (-> $(link_destination "$link")) cannot be inspected — left untouched"
-      echo "    a directory on that path denies search permission; its target may still be live"
+    elif [ "${state%%:*}" = unknown ]; then
+      # Not provably dangling, so replacing it could discard the only record of a live
+      # target: this stays untouched even under --repair-links. Each cause needs its own
+      # recovery step, so name the one that actually applies.
+      echo "  ! $link (-> $(link_destination "$link")) cannot be resolved — left untouched"
+      case "$state" in
+        unknown:permission)
+          echo "    a directory on that path denies search permission; its target may still be live" ;;
+        unknown:loop)
+          echo "    its symlink chain loops, so no target can be determined; repoint or remove it by hand" ;;
+        unknown:depth)
+          echo "    its symlink chain exceeds $LINK_HOP_LIMIT hops; repoint or remove it by hand" ;;
+      esac
     elif [ "$state" = absent ] && [ "$repair_dangling" = true ]; then
       # Read the old destination before ln -sfn replaces it — afterwards it is gone,
       # and this line is the only record of where the link used to point.

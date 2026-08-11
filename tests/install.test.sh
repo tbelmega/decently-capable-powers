@@ -227,7 +227,7 @@ if [ "$(id -u)" -ne 0 ]; then
   check "repair run exits 0" "0" "$?"
   check "the unstatable link keeps its target" "$sandbox/vault/live-skill" \
     "$(link_target "$profile/skills/research")"
-  case "$out" in *"cannot be inspected — left untouched"*) ok "the unstatable link is reported";;
+  case "$out" in *"cannot be resolved — left untouched"*) ok "the unstatable link is reported";;
     *) fail "the unstatable link was not reported — got: $out";; esac
   case "$out" in *"denies search permission"*) ok "the report names the cause";;
     *) fail "the report does not name the cause";; esac
@@ -257,11 +257,53 @@ if [ "$(id -u)" -ne 0 ]; then
     "$(link_target "$profile/skills/research")"
   check "the looping link keeps its target" "$sandbox/loop-a/skill" \
     "$(link_target "$profile/skills/brainstorming")"
+  # Each cause needs a different manual fix, so the diagnostic must not blame permissions
+  # for a loop — there is no directory to chmod.
+  case "$out" in *"symlink chain loops"*) ok "the loop is reported as a loop";;
+    *) fail "the loop was not reported as a loop — got: $out";; esac
   chmod 755 "$sandbox/private"
   rm -rf "$sandbox"
 else
-  echo "  skipped: unsearchable-ancestor case (running as root)"
+  echo "  skipped: unsearchable-ancestor cases (running as root)"
 fi
+
+# Chain length alone proves nothing: a long chain ending in a missing path is as dangling as
+# a short one, and --repair-links promised to repair every dangling link.
+echo "install.sh: a long but cycle-free dangling chain is still repaired"
+new_sandbox
+profile="$home/.claude-chain"
+mkdir -p "$profile/skills"
+hop=0
+while [ "$hop" -lt 30 ]; do
+  next=$((hop + 1))
+  ln -s "$sandbox/hop-$next" "$sandbox/hop-$hop"
+  hop="$next"
+done                                    # hop-0 -> ... -> hop-30, which never exists
+ln -s "$sandbox/hop-0/brainstorming" "$profile/skills/brainstorming"
+check "the 30-hop chain does not resolve" "1" \
+  "$([ -L "$profile/skills/brainstorming" ] && [ ! -e "$profile/skills/brainstorming" ] && echo 1 || echo 0)"
+out="$(HOME="$home" "$install_sh" --config-dir "$profile" --repair-links 2>&1)"
+check "repair run exits 0" "0" "$?"
+check "the long dangling chain is repaired" "$fixture/skills/brainstorming" \
+  "$(link_target "$profile/skills/brainstorming")"
+
+# Past the hop limit the verdict is indeterminate, and the report must say why.
+hop=0
+while [ "$hop" -lt 80 ]; do
+  next=$((hop + 1))
+  ln -s "$sandbox/deep-$next" "$sandbox/deep-$hop"
+  hop="$next"
+done
+# -f: the run above already created this link, and plain `ln -s` would fail silently here,
+# leaving the case asserting against a link it never set up.
+ln -sfn "$sandbox/deep-0/research" "$profile/skills/research"
+out="$(HOME="$home" "$install_sh" --config-dir "$profile" --repair-links 2>&1)"
+check "repair run exits 0" "0" "$?"
+check "an over-long chain keeps its target" "$sandbox/deep-0/research" \
+  "$(link_target "$profile/skills/research")"
+case "$out" in *"exceeds 64 hops"*) ok "the hop limit is reported as the cause";;
+  *) fail "the hop limit was not reported — got: $out";; esac
+rm -rf "$sandbox"
 
 # new_sandbox's own guard is the only thing between a failed mktemp and paths derived
 # from an empty $sandbox — /home and /repo, written to and later rm -rf'd. Proving it
