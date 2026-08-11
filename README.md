@@ -41,7 +41,7 @@ measurably still have:
 | test-driven-development | implementation-first work, mock-heavy tests |
 | systematic-debugging | patching symptoms; not stepping back after repeated failures |
 | verification-before-completion | unverified — or gamed — success claims |
-| receiving-code-review | sycophantic caving to feedback |
+| receiving-code-review | sycophantic caving to feedback; patching a finding's location, not its pattern |
 | coding-standards | type/naming/abstraction drift |
 | model-selection | wrong model or reasoning effort for the task |
 | agent-handover | context rot; dead ends at usage limits |

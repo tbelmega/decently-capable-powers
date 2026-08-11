@@ -138,8 +138,10 @@ tokens.
 
 ## Receiving code review
 Evaluate feedback technically: restate it, verify against the actual code, implement what's right,
-push back on what's wrong. No performative agreement. → For nuanced cases, load
-`receiving-code-review`.
+push back on what's wrong. No performative agreement. Fix the pattern, not the location: name a
+finding's root cause and sweep the whole review range — plus whatever the changed code was copied
+from — for siblings and for stale restatements of any fact you corrected, before calling it fixed.
+→ For nuanced cases, load `receiving-code-review`.
 
 ## Code quality
 Write to the project's existing conventions. Favor strong, explicit types and clear module
