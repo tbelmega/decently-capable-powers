@@ -53,6 +53,27 @@ have full context?
 Clarify everything first, then: blocking issues (breakage, security) → simple fixes → complex
 fixes. Test each individually; verify no regressions.
 
+## Fix the Pattern, Not the Location
+
+A finding is evidence of a pattern, not merely a place to patch. Before marking one fixed:
+
+1. **Name its root-cause pattern** in one sentence — the mistake, not the symptom.
+2. **Sweep the whole review range for siblings**, plus the files the changed code was copied
+   from or modelled on, and fix them in the same change.
+3. **Correcting a fact or a contract? Sweep every restatement of it.** Update each, or replace
+   it with a link to one canonical source.
+
+A sibling you leave behind returns as a later-round finding and costs a full round.
+
+Durable records name the command and its terminal signal, never a count that goes stale as the
+tests or the inventory grow: "the suite passes" survives, "59 checks pass" does not.
+
+## What a Clean Round Does Not Prove
+
+A reviewer reporting complete file coverage has not certified that the defects are all found —
+a clean round means that pass produced no finding. The round cap bounds cost; it does not
+demonstrate convergence. Report either as what it is, never as "the code is now correct".
+
 ## When You Pushed Back and Were Wrong
 
 State the correction factually and move on: "Verified — you're right, X does Y. Fixing."
