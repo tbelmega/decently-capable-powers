@@ -35,6 +35,14 @@ lessens the need for testing and documentation.
   must tolerate records written before it existed (optional until a migration or backfill
   ships) — the stack files have the full mechanics.
 
+## Guards and Validation
+
+Before writing a guard, enumerate the input and source states it can face and the verdict for
+each — including the states where it cannot tell, which are their own verdict and never a
+silent pass or fail. Designing that table up front is what keeps failure behavior from being
+discovered one cell at a time in review; a state you never named is one the guard answers by
+accident.
+
 ## Comments and Documentation
 
 ### When to Comment
