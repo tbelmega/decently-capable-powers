@@ -79,7 +79,9 @@ Moving or renaming this checkout leaves the old links dangling, and a skill behi
 link is silently unloadable. A run reports each one and leaves it in place — a dangling target
 may equally be a foreign checkout on an offline volume, and its path is unrecoverable once
 overwritten. `./install.sh --repair-links` repoints them at this repo; links resolving to live
-content elsewhere are always left alone.
+content elsewhere are always left alone. So is a link whose target cannot be inspected because a
+directory on its path denies search permission: `test -e` cannot tell that apart from dangling,
+but the content behind it may be perfectly alive, so the run reports it and repairs nothing.
 
 `./tests/install.test.sh` covers the argument surface and both linking behaviors against a
 disposable fixture.

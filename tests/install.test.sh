@@ -209,13 +209,53 @@ case "$out" in *"was dangling: $sandbox/gone/skills/brainstorming"*)
 check "no dangling links remain" "0" "$(count_dangling "$profile/skills")"
 rm -rf "$sandbox"
 
+# A link whose target sits behind a directory that denies search is indistinguishable from
+# a dangling one by `test -e`, but its content may be perfectly alive. Repairing it would
+# discard the only record of the destination, so it must survive even --repair-links.
+# (root ignores mode bits, so the case can only run unprivileged.)
+if [ "$(id -u)" -ne 0 ]; then
+  echo "install.sh: a target behind an unsearchable directory is never repaired"
+  new_sandbox
+  profile="$home/.claude-vault"
+  mkdir -p "$profile/skills" "$sandbox/vault/live-skill" "$sandbox/gone"
+  ln -s "$sandbox/vault/live-skill" "$profile/skills/research"        # live, but about to be hidden
+  ln -s "$sandbox/gone/brainstorming" "$profile/skills/brainstorming" # provably absent
+  chmod 000 "$sandbox/vault"
+  check "the hidden target is indistinguishable from dangling" "1" \
+    "$([ -L "$profile/skills/research" ] && [ ! -e "$profile/skills/research" ] && echo 1 || echo 0)"
+  out="$(HOME="$home" "$install_sh" --config-dir "$profile" --repair-links 2>&1)"
+  check "repair run exits 0" "0" "$?"
+  check "the unstatable link keeps its target" "$sandbox/vault/live-skill" \
+    "$(link_target "$profile/skills/research")"
+  case "$out" in *"cannot be inspected — left untouched"*) ok "the unstatable link is reported";;
+    *) fail "the unstatable link was not reported — got: $out";; esac
+  case "$out" in *"denies search permission"*) ok "the report names the cause";;
+    *) fail "the report does not name the cause";; esac
+  check "a provably absent target is still repaired in the same run" "$fixture/skills/brainstorming" \
+    "$(link_target "$profile/skills/brainstorming")"
+  chmod 755 "$sandbox/vault"
+  rm -rf "$sandbox"
+else
+  echo "  skipped: unsearchable-ancestor case (running as root)"
+fi
+
 # new_sandbox's own guard is the only thing between a failed mktemp and paths derived
 # from an empty $sandbox — /home and /repo, written to and later rm -rf'd. Proving it
 # fires means re-running this very file with mktemp stubbed out; DCP_TEST_NO_RECURSE
 # keeps the child from reaching this case, whatever the stub does upstream of it.
 if [ -z "${DCP_TEST_NO_RECURSE:-}" ]; then
   echo "harness: an unusable mktemp aborts before any sandbox path is derived"
-  stub_dir="$(mktemp -d)" || { echo "FATAL: mktemp -d failed; refusing to run" >&2; exit 2; }
+  # The stubs live inside a fixture from new_sandbox rather than in a second mktemp -d of
+  # their own: a separate allocation would need the same guard duplicated around it, and a
+  # successful-but-empty result there would put the stubs and the witness at /mkdir, /cp,
+  # /rm and /witness — the very failure class these cases exist to pin down.
+  new_sandbox
+  stub_dir="$sandbox/stubs"
+  case "$stub_dir" in
+    "$sandbox"/*) ;;
+    *) echo "FATAL: stub directory escaped the fixture; refusing to run" >&2; exit 2 ;;
+  esac
+  mkdir -p "$stub_dir" || { echo "FATAL: cannot create $stub_dir; refusing to run" >&2; exit 2; }
   witness="$stub_dir/witness"
 
   # Two layers, because each covers what the other cannot. DCP_TEST_GUARD_PROBE stops the
@@ -251,7 +291,7 @@ EOF
     *) fail "an empty mktemp result produced no FATAL message — got: $guard_out";; esac
   check "an empty mktemp result touches no path" "" "$(cat "$witness")"
 
-  rm -rf "$stub_dir"
+  rm -rf "$sandbox"
 fi
 
 echo

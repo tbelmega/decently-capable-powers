@@ -66,25 +66,61 @@ link_destination() {
   esac
 }
 
+# present | absent | unknown for a path `test -e` said nothing about. `-e` answers false
+# both for "not there" and for "an ancestor denies search permission", and repairing the
+# second case would discard a link to live content. So walk the path top-down: while every
+# ancestor so far is a searchable directory, a missing component is genuinely missing; the
+# moment one cannot be looked inside, the verdict is unknown rather than absent. A regular
+# file mid-path (ENOTDIR) is definitive too — nothing can exist below it.
+target_state() {
+  local target="$1" cur rest component
+  if [ -e "$target" ]; then printf 'present\n'; return; fi
+  case "$target" in
+    /*) cur=""; rest="${target#/}" ;;
+    *) cur="."; rest="$target" ;;
+  esac
+  while [ -n "$rest" ]; do
+    component="${rest%%/*}"
+    if [ "$component" = "$rest" ]; then rest=""; else rest="${rest#*/}"; fi
+    [ -n "$component" ] || continue
+    cur="$cur/$component"
+    if [ ! -e "$cur" ]; then printf 'absent\n'; return; fi
+    if [ -n "$rest" ]; then
+      if [ ! -d "$cur" ]; then printf 'absent\n'; return; fi
+      if [ ! -x "$cur" ]; then printf 'unknown\n'; return; fi
+    fi
+  done
+  printf 'present\n'
+}
+
 link_skills() {
   local target_root="$1"
   mkdir -p "$target_root"
   local linked=0 repaired=0 current=0
   for skill_dir in "$REPO_DIR"/skills/*/; do
-    local name link previous
+    local name link previous state
     name="$(basename "$skill_dir")"
     link="$target_root/$name"
+    # Only an unresolvable link needs classifying; a resolvable one is present by definition.
+    state=""
+    if [ -L "$link" ] && [ ! -e "$link" ]; then state="$(target_state "$(link_destination "$link")")"; fi
     if [ -L "$link" ] && [ -e "$link" ] &&
        [ "$(canonical_dir "$(link_destination "$link")")" = "$(canonical_dir "${skill_dir%/}")" ]; then
       current=$((current + 1))
-    elif [ -L "$link" ] && [ ! -e "$link" ] && [ "$repair_dangling" = true ]; then
+    elif [ "$state" = unknown ]; then
+      # Not provably dangling: a directory on the path denies search, so the target may
+      # well be live foreign content. Replacing it would discard the only record of where
+      # it pointed, so this stays untouched even under --repair-links.
+      echo "  ! $link (-> $(link_destination "$link")) cannot be inspected — left untouched"
+      echo "    a directory on that path denies search permission; its target may still be live"
+    elif [ "$state" = absent ] && [ "$repair_dangling" = true ]; then
       # Read the old destination before ln -sfn replaces it — afterwards it is gone,
       # and this line is the only record of where the link used to point.
       previous="$(link_destination "$link")"
       ln -sfn "${skill_dir%/}" "$link"
       echo "  ~ $link repointed at this repo (was dangling: $previous)"
       repaired=$((repaired + 1))
-    elif [ -L "$link" ] && [ ! -e "$link" ]; then
+    elif [ "$state" = absent ]; then
       # A dangling target carries no provenance: it may be this repo under a
       # previous path, or a foreign checkout on a volume that is merely offline.
       # Guessing would silently discard the latter, so name the fix instead.
