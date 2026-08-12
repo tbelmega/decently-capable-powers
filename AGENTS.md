@@ -27,6 +27,25 @@ pointing them to a file — an output, a render, a temp artifact — always prin
 path, never "in the scratchpad" or another location name they can't resolve. This holds for every
 file reference, not only scratchpad ones.
 
+## Writing and language
+**Dashes.** Never an em dash or an en dash, in anything you write: product copy, code comments,
+docs, specs, commit messages, and chat. Use ordinary punctuation instead (comma, semicolon,
+colon, period, parentheses). When a dash really is the right mark, type the plain keyboard
+hyphen with spaces around it, like this - a short pause - and move on; usually a comma or a
+semicolon is better. Numeric ranges take the same hyphen: `5-9`. Em dashes read as
+machine-written text, and a human types the key on the keyboard. When you are editing text
+somebody else wrote, substitute the hyphen and leave the wording alone; do not silently
+re-punctuate their sentences into colons and commas unless you were asked to edit the prose.
+
+**German.** Write German in the generic masculine and formal *Sie*: `der Nutzer`, `die
+Entwickler`, `die Kunden`. Never gendering markers (`:innen`, `*innen`, `/innen`, `_innen`,
+Binnen-I such as `StudentInnen`), never paired forms (`der:die Nutzer:in`, `ein:e Nutzer:in`),
+and never a participle picked to dodge gendering (`Studierende` in place of `Studenten`). This
+is treated as a correctness rule, not a stylistic preference. Nouns that are simply feminine,
+such as `Person` or `Fachkraft`, are fine: the ban is on active gendering markers, not on
+feminine nouns. Applies to every German text you produce, including UI copy, specs, docs,
+comments, commit messages, and chat.
+
 ## Understanding unfamiliar code
 Before planning against a codebase, system, or feature you don't already understand, map how it
 actually works first — don't guess from names. → To map or document current behavior, load
