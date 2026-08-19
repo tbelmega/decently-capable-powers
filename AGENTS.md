@@ -37,15 +37,6 @@ machine-written text, and a human types the key on the keyboard. When you are ed
 somebody else wrote, substitute the hyphen and leave the wording alone; do not silently
 re-punctuate their sentences into colons and commas unless you were asked to edit the prose.
 
-**German.** Write German in the generic masculine and formal *Sie*: `der Nutzer`, `die
-Entwickler`, `die Kunden`. Never gendering markers (`:innen`, `*innen`, `/innen`, `_innen`,
-Binnen-I such as `StudentInnen`), never paired forms (`der:die Nutzer:in`, `ein:e Nutzer:in`),
-and never a participle picked to dodge gendering (`Studierende` in place of `Studenten`). This
-is treated as a correctness rule, not a stylistic preference. Nouns that are simply feminine,
-such as `Person` or `Fachkraft`, are fine: the ban is on active gendering markers, not on
-feminine nouns. Applies to every German text you produce, including UI copy, specs, docs,
-comments, commit messages, and chat.
-
 ## Understanding unfamiliar code
 Before planning against a codebase, system, or feature you don't already understand, map how it
 actually works first — don't guess from names. → To map or document current behavior, load
@@ -76,7 +67,15 @@ checklist, load `verification-before-completion`.
 
 ## Commits
 End each task by running typecheck + tests; commit when green with a clear message. Aim for small,
-self-contained, green commits.
+self-contained, green commits. Follow explicit commit-message conventions in the repository. If none exist, follow a clear,
+consistent pattern in its recent history. If neither provides useful guidance, default to:
+- Write the subject in imperative mood and sentence case.
+- Keep the message concise but self-sufficient. Describe the change, and explain its reason when
+  it is not evident from the change itself.
+- Do not use context-dependent subjects such as `Close phase 4`. References may supplement a
+  descriptive subject, but must not replace it.
+- If an unpublished commit only fixes or polishes the preceding commit, amend or squash it when
+  practical. Do not rewrite shared history without explicit authorization.
 
 ## Worktrees and checkouts — the user assigns them, you never change them
 Work where you were started. **Never switch, create, or delete a git worktree, and never check
