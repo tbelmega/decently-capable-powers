@@ -57,13 +57,16 @@ fixes. Test each individually; verify no regressions.
 
 A finding is evidence of a pattern, not merely a place to patch. Before marking one fixed:
 
-1. **Name its root-cause pattern** in one sentence — the mistake, not the symptom.
+1. **Name its root-cause pattern** in one sentence - the mistake, not the symptom.
 2. **Sweep the whole review range for siblings**, plus the files the changed code was copied
-   from or modelled on, and fix them in the same change.
+   from or modelled on, and identify them before choosing the finding's disposition.
 3. **Correcting a fact or a contract? Sweep every restatement of it.** Update each, or replace
    it with a link to one canonical source.
 
-A sibling you leave behind returns as a later-round finding and costs a full round.
+When an active review orchestrator provides a durable finding-disposition and follow-up workflow,
+follow its scope decision about whether a confirmed sibling is fixed here or delegated. Without
+one, fix confirmed sibling occurrences in the same change. A sibling that is neither fixed nor
+durably delegated returns as a later-round finding and costs a full round.
 
 Durable records name the command and its terminal signal, never a count that goes stale as the
 tests or the inventory grow: "the suite passes" survives, "59 checks pass" does not.
