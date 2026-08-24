@@ -325,6 +325,119 @@ case "$out" in *"exceeds 64 hops"*) ok "the hop limit is reported as the cause";
   *) fail "the hop limit was not reported — got: $out";; esac
 rm -rf "$sandbox"
 
+echo "install.sh: creates the tagged guide section on a fresh home"
+new_sandbox
+out="$(HOME="$home" "$install_sh" 2>&1)"
+check "fresh run exits 0" "0" "$?"
+claude_md="$home/.claude/CLAUDE.md"
+check "wrapper opened once" "1" "$(grep -cxF '<GENERATED>' "$claude_md")"
+check "wrapper closed once" "1" "$(grep -cxF '</GENERATED>' "$claude_md")"
+check "section tag present" "1" "$(grep -cxF '<DECENTLY-CAPABLE-POWERS>' "$claude_md")"
+check "section closed" "1" "$(grep -cxF '</DECENTLY-CAPABLE-POWERS>' "$claude_md")"
+check "codex config tagged too" "1" "$(grep -cxF '<GENERATED>' "$home/.codex/AGENTS.md")"
+case "$out" in *"created managed section"*) ok "fresh run reports creation";;
+  *) fail "fresh run did not report creation — got: $out";; esac
+
+echo "install.sh: a second run leaves the section byte-identical"
+cp "$claude_md" "$sandbox/before"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "rerun exits 0" "0" "$?"
+check "config unchanged" "0" "$(cmp -s "$sandbox/before" "$claude_md"; echo $?)"
+rm -rf "$sandbox"
+
+echo "install.sh: appends below custom content and ignores prose mentions of the tags"
+new_sandbox
+mkdir -p "$home/.claude"
+printf '# My rules\nthe <GENERATED> wrapper and the <DECENTLY-CAPABLE-POWERS> tag are discussed here\n' > "$home/.claude/CLAUDE.md"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "run exits 0" "0" "$?"
+check "custom head preserved" "# My rules" "$(head -1 "$home/.claude/CLAUDE.md")"
+check "mention line preserved" "1" "$(grep -cF 'are discussed here' "$home/.claude/CLAUDE.md")"
+check "exactly one real wrapper open" "1" "$(grep -cxF '<GENERATED>' "$home/.claude/CLAUDE.md")"
+check "exactly one section" "1" "$(grep -cxF '<DECENTLY-CAPABLE-POWERS>' "$home/.claude/CLAUDE.md")"
+rm -rf "$sandbox"
+
+echo "install.sh: migrates a legacy DCP:START/END block in place"
+new_sandbox
+mkdir -p "$home/.claude"
+{
+  echo "# Operating guide"
+  echo "<!-- DCP:START — managed block; edit in the decently-capable-powers repo, then re-run install.sh -->"
+  echo "OLD-BLOCK-BODY"
+  echo "<!-- DCP:END -->"
+  echo ""
+  echo "# my custom tail"
+} > "$home/.claude/CLAUDE.md"
+out="$(HOME="$home" "$install_sh" 2>&1)"
+check "migration run exits 0" "0" "$?"
+check "legacy start marker gone" "0" "$(grep -cF 'DCP:START' "$home/.claude/CLAUDE.md")"
+check "old body gone" "0" "$(grep -cF 'OLD-BLOCK-BODY' "$home/.claude/CLAUDE.md")"
+check "custom head preserved" "# Operating guide" "$(head -1 "$home/.claude/CLAUDE.md")"
+check "custom tail preserved" "1" "$(grep -cxF '# my custom tail' "$home/.claude/CLAUDE.md")"
+check "wrapper present once" "1" "$(grep -cxF '<GENERATED>' "$home/.claude/CLAUDE.md")"
+case "$out" in *"migrated legacy markers"*) ok "migration is reported";;
+  *) fail "migration was not reported — got: $out";; esac
+cp "$home/.claude/CLAUDE.md" "$sandbox/after-migration"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "post-migration rerun exits 0" "0" "$?"
+check "post-migration rerun is byte-identical" "0" \
+  "$(cmp -s "$sandbox/after-migration" "$home/.claude/CLAUDE.md"; echo $?)"
+rm -rf "$sandbox"
+
+echo "install.sh: preserves a sibling section inside an existing wrapper"
+new_sandbox
+mkdir -p "$home/.claude"
+{
+  echo "<GENERATED>"
+  echo "<DECENTLY-COORDINATED-LOOPS>"
+  echo "SIBLING-SECTION-BODY"
+  echo "</DECENTLY-COORDINATED-LOOPS>"
+  echo "</GENERATED>"
+} > "$home/.claude/CLAUDE.md"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "run exits 0" "0" "$?"
+check "sibling body preserved" "1" "$(grep -cxF 'SIBLING-SECTION-BODY' "$home/.claude/CLAUDE.md")"
+check "own section inserted" "1" "$(grep -cxF '<DECENTLY-CAPABLE-POWERS>' "$home/.claude/CLAUDE.md")"
+check "still one wrapper" "1" "$(grep -cxF '<GENERATED>' "$home/.claude/CLAUDE.md")"
+awk_last="$(awk '/^<\/GENERATED>$/ { last = prev } { prev = $0 } END { print last }' "$home/.claude/CLAUDE.md")"
+check "own section sits inside the wrapper" "</DECENTLY-CAPABLE-POWERS>" "$awk_last"
+rm -rf "$sandbox"
+
+echo "install.sh: malformed tags fail closed and leave the file untouched"
+new_sandbox
+mkdir -p "$home/.claude"
+printf '# head\n<GENERATED>\nnever closed\n' > "$home/.claude/CLAUDE.md"
+cp "$home/.claude/CLAUDE.md" "$sandbox/malformed-before"
+out="$(HOME="$home" "$install_sh" 2>&1)"
+check "run still exits 0" "0" "$?"
+check "malformed file untouched" "0" "$(cmp -s "$sandbox/malformed-before" "$home/.claude/CLAUDE.md"; echo $?)"
+case "$out" in *"left untouched"*) ok "the skip is reported";;
+  *) fail "the skip was not reported — got: $out";; esac
+printf '<GENERATED>\na\n</GENERATED>\n<GENERATED>\nb\n</GENERATED>\n' > "$home/.claude/CLAUDE.md"
+cp "$home/.claude/CLAUDE.md" "$sandbox/double-before"
+out="$(HOME="$home" "$install_sh" 2>&1)"
+check "double-wrapper run exits 0" "0" "$?"
+check "double-wrapper file untouched" "0" "$(cmp -s "$sandbox/double-before" "$home/.claude/CLAUDE.md"; echo $?)"
+case "$out" in *"more than one"*) ok "the ambiguity is named";;
+  *) fail "the ambiguity was not named — got: $out";; esac
+rm -rf "$sandbox"
+
+echo "install.sh: alternate profiles opt in by section or legacy marker, never by mention"
+new_sandbox
+mkdir -p "$home/.claude" "$home/.claude-legacy" "$home/.claude-tagged" "$home/.claude-mention"
+printf '# legacy profile\n<!-- DCP:START — managed block; edit in the decently-capable-powers repo, then re-run install.sh -->\nOLD-PROFILE-BODY\n<!-- DCP:END -->\n' > "$home/.claude-legacy/CLAUDE.md"
+printf '# tagged profile\n<GENERATED>\n<DECENTLY-CAPABLE-POWERS>\nSTALE-PROFILE-BODY\n</DECENTLY-CAPABLE-POWERS>\n</GENERATED>\n' > "$home/.claude-tagged/CLAUDE.md"
+printf '# notes\nthe <DECENTLY-CAPABLE-POWERS> tag is discussed here\n' > "$home/.claude-mention/CLAUDE.md"
+cp "$home/.claude-mention/CLAUDE.md" "$sandbox/mention-before"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "run exits 0" "0" "$?"
+check "legacy profile migrated" "0" "$(grep -cF 'DCP:START' "$home/.claude-legacy/CLAUDE.md")"
+check "legacy profile refreshed" "0" "$(grep -cF 'OLD-PROFILE-BODY' "$home/.claude-legacy/CLAUDE.md")"
+check "tagged profile refreshed" "0" "$(grep -cF 'STALE-PROFILE-BODY' "$home/.claude-tagged/CLAUDE.md")"
+check "tagged profile keeps its head" "# tagged profile" "$(head -1 "$home/.claude-tagged/CLAUDE.md")"
+check "mention-only profile untouched" "0" "$(cmp -s "$sandbox/mention-before" "$home/.claude-mention/CLAUDE.md"; echo $?)"
+rm -rf "$sandbox"
+
 # new_sandbox's own guard is the only thing between a failed mktemp and paths derived
 # from an empty $sandbox — /home and /repo, written to and later rm -rf'd. Proving it
 # fires means re-running this very file with mktemp stubbed out; DCP_TEST_NO_RECURSE

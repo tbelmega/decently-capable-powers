@@ -1,5 +1,6 @@
 # Operating guide
-<!-- DCP:START — managed block; edit in the decently-capable-powers repo, then re-run install.sh -->
+<DECENTLY-CAPABLE-POWERS>
+<!-- managed by decently-capable-powers; edit in that repo, then re-run install.sh -->
 
 Always-on working defaults. Each is the essence (the fallback); where a fuller procedure exists,
 a → line says which skill to load for depth. Loading is the model's judgment, not enforced —
@@ -174,4 +175,4 @@ overthinks. If the work clearly fits a different model or harness in the user's 
 say so before proceeding rather than grinding through. → Before assigning model or effort to any
 work item — including a subagent dispatch — load `model-selection`.
 
-<!-- DCP:END -->
+</DECENTLY-CAPABLE-POWERS>

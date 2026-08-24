@@ -6,10 +6,12 @@
 #     and Cursor) and ~/.agents/skills/ (read by Codex, Cursor, and Grok Build).
 #     Cursor and Grok Build read both trees; identical names resolve to
 #     identical content, so the overlap is harmless.
-#   - Refreshes the DCP-markered operating-guide block in ~/.claude/CLAUDE.md
-#     (Claude Code) and ~/.codex/AGENTS.md (Codex). Alternate Claude Code
-#     profiles (CLAUDE_CONFIG_DIR=~/.claude-<name>) are refreshed too when
-#     their CLAUDE.md already carries the marker — they opt in by having it.
+#   - Refreshes the operating-guide section (a <DECENTLY-CAPABLE-POWERS> tag pair
+#     inside the shared <GENERATED> wrapper) in ~/.claude/CLAUDE.md (Claude Code)
+#     and ~/.codex/AGENTS.md (Codex), migrating legacy DCP:START/END markers.
+#     Alternate Claude Code profiles (CLAUDE_CONFIG_DIR=~/.claude-<name>) are
+#     refreshed too when their CLAUDE.md already carries the section — they opt
+#     in by having it.
 #   - Grok Build needs no targets of its own: it reads ~/.agents/skills/
 #     natively and loads ~/.claude/CLAUDE.md via its Claude compat, which is on
 #     by default — a ~/.grok/AGENTS.md copy would double-load the guide
@@ -43,8 +45,20 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GUIDE="$REPO_DIR/AGENTS.md"
-START_MARK='DCP:START'
-END_MARK='DCP:END'
+# Tag grammar shared with decently-coordinated-loops (agreed 2026-08-23): one outer
+# <GENERATED> wrapper per config file holds one inner section per tool. A tag counts
+# only when it is the entire trimmed line, and only as part of a nearest open/close
+# pair — a prose mention of a tag elsewhere in the file is inert. Malformed or
+# ambiguous tags fail closed: the file is reported and left untouched.
+GEN_OPEN='<GENERATED>'
+GEN_CLOSE='</GENERATED>'
+SEC_OPEN='<DECENTLY-CAPABLE-POWERS>'
+SEC_CLOSE='</DECENTLY-CAPABLE-POWERS>'
+# Legacy markers, recognised for migration only: configs written before the tag
+# grammar carry them. Matched as a trimmed-line *prefix* (the old line carries prose
+# after the marker), which is what the old installer's substring match saw too.
+LEGACY_START='<!-- DCP:START'
+LEGACY_END='<!-- DCP:END'
 # Above Linux's 40-hop and BSD's 32-hop resolution limits, so any chain the kernel itself
 # would follow is still classified on its merits rather than cut short as indeterminate.
 LINK_HOP_LIMIT=64
@@ -189,32 +203,135 @@ seed_local_files() {
   if [ "$seeded" -eq 0 ]; then echo "  all local files already present"; fi
 }
 
-# Replace (or append) the marker-delimited operating-guide block in $1.
+# The guide section — the <DECENTLY-CAPABLE-POWERS>..</DECENTLY-CAPABLE-POWERS>
+# region of this repo's AGENTS.md, tags included — written to $1. Aborts the install
+# when the source is malformed: every target would inherit the defect.
+extract_section() {
+  local out="$1"
+  awk -v so="$SEC_OPEN" -v sc="$SEC_CLOSE" '
+    function trim(s) { sub(/^[ \t\r]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
+    trim($0) == so && !f { f = 1 }
+    f { print }
+    trim($0) == sc && f { closed = 1; exit }
+    END { exit closed ? 0 : 1 }
+  ' "$GUIDE" > "$out" || {
+    echo "$GUIDE has no well-formed $SEC_OPEN section — nothing was installed" >&2
+    exit 1
+  }
+}
+
+# Upsert the guide section into $1's <GENERATED> wrapper: replace an existing
+# section in place, insert a missing one into the wrapper (created if absent), and
+# migrate a legacy DCP:START/END block into the tag grammar. Sibling sections and
+# everything outside the tags are preserved byte for byte. Malformed or ambiguous
+# tags skip the file with a report; the run continues for the other targets.
 refresh_block() {
   local target="$1"
   mkdir -p "$(dirname "$target")"
-  local block tmp
+  local block tmp status
   block="$(mktemp)"
-  awk -v s="$START_MARK" -v e="$END_MARK" \
-    'index($0,s){f=1} f{print} index($0,e){f=0}' "$GUIDE" > "$block"
-  if [ -f "$target" ] && grep -q "$START_MARK" "$target"; then
-    tmp="$(mktemp)"
-    awk -v s="$START_MARK" -v e="$END_MARK" -v bf="$block" '
-      index($0,s) {while ((getline l < bf) > 0) print l; close(bf); f=1; next}
-      index($0,e) {f=0; next}
-      !f {print}
-    ' "$target" > "$tmp"
-    mv "$tmp" "$target"
-    echo "  refreshed managed block in $target"
-  else
+  extract_section "$block"
+  if [ ! -f "$target" ]; then
     {
-      if [ -s "$target" ]; then echo ""; fi
       echo "# Operating guide"
+      echo "$GEN_OPEN"
       cat "$block"
-    } >> "$target"
-    echo "  appended managed block to $target"
+      echo "$GEN_CLOSE"
+    } > "$target"
+    echo "  created managed section in $target"
+    rm -f "$block"
+    return 0
   fi
-  rm -f "$block"
+  tmp="$(mktemp)"
+  status=0
+  awk -v go="$GEN_OPEN" -v gc="$GEN_CLOSE" -v so="$SEC_OPEN" -v sc="$SEC_CLOSE" \
+      -v ls="$LEGACY_START" -v le="$LEGACY_END" -v bf="$block" '
+    function trim(s) { sub(/^[ \t\r]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
+    function skip(reason) { print "SKIP " reason > "/dev/stderr"; exit 3 }
+    function section() { while ((getline l < bf) > 0) print l; close(bf) }
+    { line[NR] = $0; n = NR }
+    END {
+      # Wrapper pairs: nearest open/close, exact trimmed lines only.
+      gopen = 0; gpairs = 0
+      for (i = 1; i <= n; i++) {
+        t = trim(line[i])
+        if (t == go) {
+          if (gopen) skip(go " opened again before it was closed")
+          gopen = i
+        } else if (t == gc && gopen) {
+          gpairs++; gO = gopen; gC = i; gopen = 0
+          if (gpairs > 1) skip("more than one " go " block")
+        }
+      }
+      if (gopen) skip(go " is never closed")
+      # Own section pair, only inside the wrapper — outside mentions are inert.
+      sO = 0; sC = 0
+      if (gpairs == 1) {
+        sopen = 0; spairs = 0
+        for (i = gO + 1; i < gC; i++) {
+          t = trim(line[i])
+          if (t == so) {
+            if (sopen) skip(so " opened again before it was closed")
+            sopen = i
+          } else if (t == sc && sopen) {
+            spairs++; sO = sopen; sC = i; sopen = 0
+            if (spairs > 1) skip("more than one " so " section")
+          }
+        }
+        if (sopen) skip(so " is never closed")
+      }
+      # First legacy region: a lone start with no end never delimited a block for
+      # the old installer either, so it is not a region here.
+      lO = 0; lC = 0
+      for (i = 1; i <= n && !lO; i++) if (index(trim(line[i]), ls) == 1) lO = i
+      if (lO) for (i = lO + 1; i <= n && !lC; i++) if (index(trim(line[i]), le) == 1) lC = i
+      if (!lC) lO = 0
+
+      if (gpairs == 1) {
+        for (i = 1; i <= n; i++) {
+          if (sO && i == sO) { section(); i = sC; continue }
+          if (!sO && i == gC) section()
+          if (lO && i == lO) {
+            # The section content now lives inside the wrapper; fold the legacy
+            # block away, collapsing the doubled blank line it leaves behind.
+            i = lC
+            if (lO > 1 && trim(line[lO - 1]) == "" && i < n && trim(line[i + 1]) == "") i++
+            continue
+          }
+          print line[i]
+        }
+        print (lO ? "MIGRATED" : (sO ? "REPLACED" : "APPENDED")) > "/dev/stderr"
+        exit 0
+      }
+      if (lO) {
+        for (i = 1; i <= n; i++) {
+          if (i == lO) { print go; section(); print gc; i = lC; continue }
+          print line[i]
+        }
+        print "MIGRATED" > "/dev/stderr"
+        exit 0
+      }
+      for (i = 1; i <= n; i++) print line[i]
+      if (trim(line[n]) != "") print ""
+      print "# Operating guide"
+      print go; section(); print gc
+      print "APPENDED" > "/dev/stderr"
+      exit 0
+    }
+  ' "$target" > "$tmp" 2> "$tmp.status" || status=$?
+  if [ "$status" -eq 3 ]; then
+    echo "  ! $target: $(sed 's/^SKIP //' "$tmp.status") — left untouched; fix the tags and re-run"
+  elif [ "$status" -ne 0 ]; then
+    echo "  ! $target: refresh failed (awk exit $status) — left untouched" >&2
+  else
+    mv "$tmp" "$target"
+    case "$(cat "$tmp.status")" in
+      MIGRATED) echo "  migrated legacy markers to the managed section in $target" ;;
+      REPLACED) echo "  refreshed managed section in $target" ;;
+      APPENDED) echo "  appended managed section to $target" ;;
+    esac
+  fi
+  rm -f "$block" "$tmp" "$tmp.status"
 }
 
 project_install() {
@@ -328,11 +445,15 @@ done
 echo "Personal config (gitignored *.local.md, reaches all harnesses via the symlinks):"
 seed_local_files
 
-echo "Operating guide (managed block):"
+echo "Operating guide (managed section):"
 refresh_block "$HOME/.claude/CLAUDE.md"
-# Alternate profiles opt in by already carrying the marker; never seed them here.
+# Alternate profiles opt in by already carrying the section (the exact-line tag, or
+# the legacy marker awaiting migration); never seed them here. A prose mention of the
+# tag is not the tag on its own line and must not opt a profile in.
 for alt_claude_md in "$HOME"/.claude-*/CLAUDE.md; do
-  if [ -f "$alt_claude_md" ] && grep -q "$START_MARK" "$alt_claude_md"; then
+  if [ -f "$alt_claude_md" ] &&
+     { grep -qE "^[[:space:]]*<DECENTLY-CAPABLE-POWERS>[[:space:]]*$" "$alt_claude_md" ||
+       grep -qF "$LEGACY_START" "$alt_claude_md"; }; then
     refresh_block "$alt_claude_md"
   fi
 done
