@@ -471,7 +471,7 @@ cp "$home/.claude/CLAUDE.md" "$sandbox/dup-legacy-before"
 out="$(HOME="$home" "$install_sh" 2>&1)"
 check "duplicated legacy pairs: run exits 0" "0" "$?"
 check "duplicated legacy pairs: file untouched" "0" "$(cmp -s "$sandbox/dup-legacy-before" "$home/.claude/CLAUDE.md"; echo $?)"
-case "$out" in *"more than one legacy"*) ok "the ambiguity is named";; *) fail "ambiguity not named: $out";; esac
+case "$out" in *"unmatched, duplicated, or reversed legacy"*) ok "the ambiguity is named";; *) fail "ambiguity not named: $out";; esac
 printf '# notes\n<!-- DCP:START is mentioned here -->\nkeep this\n<!-- DCP:END is mentioned here -->\n' > "$home/.claude/CLAUDE.md"
 HOME="$home" "$install_sh" >/dev/null 2>&1
 check "legacy-lookalike prose survives" "1" "$(grep -cxF 'keep this' "$home/.claude/CLAUDE.md")"
@@ -502,18 +502,56 @@ check "the referent gained the section" "1" "$(grep -cxF '<DECENTLY-CAPABLE-POWE
 check "the referent kept its head" "# shared config" "$(head -1 "$sandbox/shared/CLAUDE.md")"
 rm -rf "$sandbox"
 
-echo "install.sh: the target lock is honored and a stale lock is stolen"
+echo "install.sh: singleton or reversed legacy markers fail closed"
 new_sandbox
-mkdir -p "$home/.claude" "$home/.claude/CLAUDE.md.lock"
-out="$(DCP_LOCK_TRIES=2 HOME="$home" "$install_sh" 2>&1)"
-check "locked run exits 0" "0" "$?"
-check "locked target not created" "0" "$([ -f "$home/.claude/CLAUDE.md" ] && echo 1 || echo 0)"
-case "$out" in *"could not acquire"*) ok "the held lock is reported";; *) fail "held lock not reported: $out";; esac
-touch -t 202001010000 "$home/.claude/CLAUDE.md.lock"
-out="$(DCP_LOCK_TRIES=2 HOME="$home" "$install_sh" 2>&1)"
-check "stale-lock run exits 0" "0" "$?"
-check "stale lock was stolen and the section written" "1" "$(grep -cxF '<DECENTLY-CAPABLE-POWERS>' "$home/.claude/CLAUDE.md")"
-check "the stolen lock is released" "0" "$([ -d "$home/.claude/CLAUDE.md.lock" ] && echo 1 || echo 0)"
+mkdir -p "$home/.claude"
+legacy_line='<!-- DCP:START — managed block; edit in the decently-capable-powers repo, then re-run install.sh -->'
+printf '# head\n%s\nnever ended\n' "$legacy_line" > "$home/.claude/CLAUDE.md"
+cp "$home/.claude/CLAUDE.md" "$sandbox/singleton-before"
+out="$(HOME="$home" "$install_sh" 2>&1)"
+check "singleton START: run exits 0" "0" "$?"
+check "singleton START: file untouched" "0" "$(cmp -s "$sandbox/singleton-before" "$home/.claude/CLAUDE.md"; echo $?)"
+case "$out" in *"unmatched, duplicated, or reversed legacy"*) ok "the damage is named";; *) fail "damage not named: $out";; esac
+printf '<!-- DCP:END -->\nreversed\n%s\n' "$legacy_line" > "$home/.claude/CLAUDE.md"
+cp "$home/.claude/CLAUDE.md" "$sandbox/reversed-before"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "reversed pair: file untouched" "0" "$(cmp -s "$sandbox/reversed-before" "$home/.claude/CLAUDE.md"; echo $?)"
+rm -rf "$sandbox"
+
+echo "install.sh: blank lines beside a folded legacy block survive byte for byte"
+new_sandbox
+mkdir -p "$home/.claude"
+legacy_line='<!-- DCP:START — managed block; edit in the decently-capable-powers repo, then re-run install.sh -->'
+{
+  echo "<GENERATED>"
+  echo "<DECENTLY-CAPABLE-POWERS>"
+  echo "STALE"
+  echo "</DECENTLY-CAPABLE-POWERS>"
+  echo "</GENERATED>"
+  echo "# before"
+  echo ""
+  echo "$legacy_line"
+  echo "old body"
+  echo "<!-- DCP:END -->"
+  echo ""
+  echo "# after"
+} > "$home/.claude/CLAUDE.md"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "migration run exits 0" "0" "$?"
+check "legacy folded away" "0" "$(grep -cF 'DCP:START' "$home/.claude/CLAUDE.md")"
+check "both boundary blanks kept" "$(printf '# before\n\n\n# after')" "$(tail -4 "$home/.claude/CLAUDE.md")"
+rm -rf "$sandbox"
+
+echo "install.sh: a symlinked alternate-profile config is edited through the link"
+new_sandbox
+mkdir -p "$home/.claude" "$home/.claude-work" "$sandbox/shared"
+printf '# shared work config\n' > "$sandbox/shared/CLAUDE.md"
+ln -s "$sandbox/shared/CLAUDE.md" "$home/.claude-work/CLAUDE.md"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "run exits 0" "0" "$?"
+check "the profile link survives" "1" "$([ -L "$home/.claude-work/CLAUDE.md" ] && echo 1 || echo 0)"
+check "the referent gained the section" "1" "$(grep -cxF '<DECENTLY-CAPABLE-POWERS>' "$sandbox/shared/CLAUDE.md")"
+check "the referent kept its head" "# shared work config" "$(head -1 "$sandbox/shared/CLAUDE.md")"
 rm -rf "$sandbox"
 
 echo "install.sh: a malformed source guide aborts before any target is written"
@@ -523,6 +561,8 @@ out="$(HOME="$home" "$install_sh" 2>&1)"; status=$?
 check "malformed source exits nonzero" "1" "$status"
 case "$out" in *"no well-formed"*) ok "the source defect is named";; *) fail "source defect not named: $out";; esac
 check "no guide was installed" "0" "$([ -f "$home/.claude/CLAUDE.md" ] && echo 1 || echo 0)"
+check "no skills were linked before validation" "0" "$([ -d "$home/.claude/skills" ] && echo 1 || echo 0)"
+check "no lock or temp litter beside the target" "0" "$(set -- "$home/.claude"/CLAUDE.md.lock "$home/.claude"/.dcp-refresh.*; [ -e "$1" ] || [ -e "$2" ] && echo 1 || echo 0)"
 rm -rf "$sandbox"
 
 # new_sandbox's own guard is the only thing between a failed mktemp and paths derived

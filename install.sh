@@ -225,27 +225,6 @@ extract_section() {
   }
 }
 
-# Both installers (this one and decently-coordinated-loops) rewrite the same config
-# files with a read-modify-write; without mutual exclusion, concurrent runs could each
-# read a one-section wrapper and the last writer would drop the other's newly written
-# section. The lock is a `<target>.lock` directory — mkdir is atomic on POSIX —
-# shared by protocol with the DCL seeder. A lock older than five minutes is treated
-# as abandoned by a killed run and stolen. DCP_LOCK_TRIES caps the 0.2s-spaced
-# attempts (test hook; default ~10s).
-acquire_lock() {
-  local lock="$1" tries="${DCP_LOCK_TRIES:-50}" i=0
-  while ! mkdir "$lock" 2>/dev/null; do
-    i=$((i + 1))
-    if [ "$i" -ge "$tries" ]; then return 1; fi
-    if [ -d "$lock" ] && [ -n "$(find "$lock" -maxdepth 0 -mmin +5 2>/dev/null)" ]; then
-      rmdir "$lock" 2>/dev/null || true
-      continue
-    fi
-    sleep 0.2
-  done
-  return 0
-}
-
 # Follow a symlink chain to its final path. A config symlink is a deliberate sharing
 # arrangement: the referent must be edited in place, never the link replaced. Fails
 # (empty output) past the hop limit — a loop.
@@ -267,8 +246,16 @@ resolve_target() {
 # separator added when appending to a file that never carried the guide. Malformed
 # or ambiguous tags — an orphan tag at either level, a section outside the wrapper,
 # duplicated markers — skip the file with a report; the run continues for the other
-# targets. A symlinked target has its referent edited in place, and the whole
-# read-modify-write runs under the cross-installer lock.
+# targets. A symlinked target has its referent edited in place. Reads $GUIDE_BLOCK,
+# the section extracted and validated before any target was touched.
+#
+# Accepted limitation (owner ruling 2026-08-23): this read-modify-write is not
+# serialized against the DCL seeder, so two installers run concurrently on the same
+# file can drop each other's freshly written section — last writer wins. The window
+# is sub-second, both runs are hand-started by the same user, the fail-closed parser
+# keeps the surviving file well-formed, and re-running the losing installer restores
+# its section. A locking protocol was tried and reverted: its own failure modes
+# reviewed worse than the race.
 refresh_block() {
   local target="$1" resolved
   if ! resolved="$(resolve_target "$target")"; then
@@ -276,13 +263,8 @@ refresh_block() {
     return 0
   fi
   mkdir -p "$(dirname "$resolved")"
-  if ! acquire_lock "$target.lock"; then
-    echo "  ! $target: could not acquire $target.lock — another installer holds it; re-run"
-    return 0
-  fi
   local block tmp status hadnl
-  block="$(mktemp)"
-  extract_section "$block"
+  block="$GUIDE_BLOCK"
   if [ ! -f "$resolved" ]; then
     {
       echo "# Operating guide"
@@ -291,8 +273,6 @@ refresh_block() {
       echo "$GEN_CLOSE"
     } > "$resolved"
     echo "  created managed section in $target"
-    rm -f "$block"
-    rmdir "$target.lock" 2>/dev/null || true
     return 0
   fi
   # Replacement is staged beside the referent so the final mv is an atomic rename on
@@ -350,9 +330,9 @@ refresh_block() {
         if (t == ls) { lstarts++; lO = lO ? lO : i }
         else if (t == le) { lends++; lC = lC ? lC : i }
       }
-      if (lstarts > 1) skip("more than one legacy DCP:START marker")
-      if (lends > 1) skip("more than one legacy DCP:END marker")
-      if (lstarts != 1 || lends != 1 || lC < lO) { lO = 0; lC = 0 }
+      if ((lstarts || lends) && (lstarts != 1 || lends != 1 || lC < lO))
+        skip("unmatched, duplicated, or reversed legacy DCP markers")
+      if (!lstarts) { lO = 0; lC = 0 }
 
       endnl = hadnl
       if (gpairs == 1) {
@@ -395,13 +375,22 @@ refresh_block() {
       APPENDED) echo "  appended managed section to $target" ;;
     esac
   fi
-  rm -f "$block" "$tmp.status"
-  rmdir "$target.lock" 2>/dev/null || true
+  rm -f "$tmp.status"
+}
+
+# The guide section is extracted and validated ONCE, before any target — skill link,
+# seeded file, or config — is touched, so a malformed source aborts with nothing
+# modified. The temp file is cleaned on every exit.
+materialize_guide() {
+  GUIDE_BLOCK="$(mktemp)"
+  trap 'rm -f "$GUIDE_BLOCK"' EXIT
+  extract_section "$GUIDE_BLOCK"
 }
 
 project_install() {
   local dir="$1"
   [ -d "$dir" ] || { echo "No such directory: $dir" >&2; exit 1; }
+  materialize_guide
   refresh_block "$dir/AGENTS.md"
   if [ ! -f "$dir/CLAUDE.md" ] || ! grep -q '@AGENTS.md' "$dir/CLAUDE.md"; then
     printf '\n@AGENTS.md\n' >> "$dir/CLAUDE.md"
@@ -462,6 +451,11 @@ elif [ "${1:-}" != "" ]; then
   echo "$USAGE" >&2
   exit 1
 fi
+
+# The guide source is validated before anything at all is created — even the write
+# probes below make directories, and a malformed source must abort with the machine
+# untouched.
+materialize_guide
 
 # A supplied profile path must be proven usable *before* anything is linked.
 # link_skills would otherwise fail at mkdir -p on a file or a dangling link — after
