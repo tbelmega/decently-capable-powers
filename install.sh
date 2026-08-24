@@ -55,10 +55,11 @@ GEN_CLOSE='</GENERATED>'
 SEC_OPEN='<DECENTLY-CAPABLE-POWERS>'
 SEC_CLOSE='</DECENTLY-CAPABLE-POWERS>'
 # Legacy markers, recognised for migration only: configs written before the tag
-# grammar carry them. Matched as a trimmed-line *prefix* (the old line carries prose
-# after the marker), which is what the old installer's substring match saw too.
-LEGACY_START='<!-- DCP:START'
-LEGACY_END='<!-- DCP:END'
+# grammar carry them. Matched as exact trimmed lines — the byte-for-byte forms the
+# old installer wrote (verified as the only forms in the wild, 2026-08-23) — so a
+# prose comment that merely starts like a marker is never treated as one.
+LEGACY_START_LINE='<!-- DCP:START — managed block; edit in the decently-capable-powers repo, then re-run install.sh -->'
+LEGACY_END_LINE='<!-- DCP:END -->'
 # Above Linux's 40-hop and BSD's 32-hop resolution limits, so any chain the kernel itself
 # would follow is still classified on its merits rather than cut short as indeterminate.
 LINK_HOP_LIMIT=64
@@ -205,133 +206,197 @@ seed_local_files() {
 
 # The guide section — the <DECENTLY-CAPABLE-POWERS>..</DECENTLY-CAPABLE-POWERS>
 # region of this repo's AGENTS.md, tags included — written to $1. Aborts the install
-# when the source is malformed: every target would inherit the defect.
+# when the source is malformed (a missing, duplicated, orphaned, or misordered tag):
+# every target would inherit the defect.
 extract_section() {
   local out="$1"
   awk -v so="$SEC_OPEN" -v sc="$SEC_CLOSE" '
     function trim(s) { sub(/^[ \t\r]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
-    trim($0) == so && !f { f = 1 }
-    f { print }
-    trim($0) == sc && f { closed = 1; exit }
-    END { exit closed ? 0 : 1 }
+    { t = trim($0); line[NR] = $0; n = NR
+      if (t == so) { opens++; if (opens == 1) start = NR }
+      else if (t == sc) { closes++; if (closes == 1) end = NR } }
+    END {
+      if (opens != 1 || closes != 1 || end < start) exit 1
+      for (i = start; i <= end; i++) print line[i]
+    }
   ' "$GUIDE" > "$out" || {
     echo "$GUIDE has no well-formed $SEC_OPEN section — nothing was installed" >&2
     exit 1
   }
 }
 
+# Both installers (this one and decently-coordinated-loops) rewrite the same config
+# files with a read-modify-write; without mutual exclusion, concurrent runs could each
+# read a one-section wrapper and the last writer would drop the other's newly written
+# section. The lock is a `<target>.lock` directory — mkdir is atomic on POSIX —
+# shared by protocol with the DCL seeder. A lock older than five minutes is treated
+# as abandoned by a killed run and stolen. DCP_LOCK_TRIES caps the 0.2s-spaced
+# attempts (test hook; default ~10s).
+acquire_lock() {
+  local lock="$1" tries="${DCP_LOCK_TRIES:-50}" i=0
+  while ! mkdir "$lock" 2>/dev/null; do
+    i=$((i + 1))
+    if [ "$i" -ge "$tries" ]; then return 1; fi
+    if [ -d "$lock" ] && [ -n "$(find "$lock" -maxdepth 0 -mmin +5 2>/dev/null)" ]; then
+      rmdir "$lock" 2>/dev/null || true
+      continue
+    fi
+    sleep 0.2
+  done
+  return 0
+}
+
+# Follow a symlink chain to its final path. A config symlink is a deliberate sharing
+# arrangement: the referent must be edited in place, never the link replaced. Fails
+# (empty output) past the hop limit — a loop.
+resolve_target() {
+  local t="$1" hops=0
+  while [ -L "$t" ]; do
+    hops=$((hops + 1))
+    if [ "$hops" -gt "$LINK_HOP_LIMIT" ]; then return 1; fi
+    t="$(link_destination "$t")"
+  done
+  printf '%s\n' "$t"
+}
+
 # Upsert the guide section into $1's <GENERATED> wrapper: replace an existing
 # section in place, insert a missing one into the wrapper (created if absent), and
 # migrate a legacy DCP:START/END block into the tag grammar. Sibling sections and
-# everything outside the tags are preserved byte for byte. Malformed or ambiguous
-# tags skip the file with a report; the run continues for the other targets.
+# everything outside the tags are preserved byte for byte, line endings and a
+# missing final newline included; the one deliberate write outside the tags is the
+# separator added when appending to a file that never carried the guide. Malformed
+# or ambiguous tags — an orphan tag at either level, a section outside the wrapper,
+# duplicated markers — skip the file with a report; the run continues for the other
+# targets. A symlinked target has its referent edited in place, and the whole
+# read-modify-write runs under the cross-installer lock.
 refresh_block() {
-  local target="$1"
-  mkdir -p "$(dirname "$target")"
-  local block tmp status
+  local target="$1" resolved
+  if ! resolved="$(resolve_target "$target")"; then
+    echo "  ! $target: symlink chain exceeds $LINK_HOP_LIMIT hops — left untouched"
+    return 0
+  fi
+  mkdir -p "$(dirname "$resolved")"
+  if ! acquire_lock "$target.lock"; then
+    echo "  ! $target: could not acquire $target.lock — another installer holds it; re-run"
+    return 0
+  fi
+  local block tmp status hadnl
   block="$(mktemp)"
   extract_section "$block"
-  if [ ! -f "$target" ]; then
+  if [ ! -f "$resolved" ]; then
     {
       echo "# Operating guide"
       echo "$GEN_OPEN"
       cat "$block"
       echo "$GEN_CLOSE"
-    } > "$target"
+    } > "$resolved"
     echo "  created managed section in $target"
     rm -f "$block"
+    rmdir "$target.lock" 2>/dev/null || true
     return 0
   fi
-  tmp="$(mktemp)"
+  # Replacement is staged beside the referent so the final mv is an atomic rename on
+  # the same filesystem, never a copy-and-delete across TMPDIR.
+  tmp="$(mktemp "$(dirname "$resolved")/.dcp-refresh.XXXXXX")"
+  hadnl=1
+  if [ -s "$resolved" ] && [ -n "$(tail -c1 "$resolved")" ]; then hadnl=0; fi
   status=0
   awk -v go="$GEN_OPEN" -v gc="$GEN_CLOSE" -v so="$SEC_OPEN" -v sc="$SEC_CLOSE" \
-      -v ls="$LEGACY_START" -v le="$LEGACY_END" -v bf="$block" '
+      -v ls="$LEGACY_START_LINE" -v le="$LEGACY_END_LINE" -v bf="$block" -v hadnl="$hadnl" '
     function trim(s) { sub(/^[ \t\r]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
     function skip(reason) { print "SKIP " reason > "/dev/stderr"; exit 3 }
-    function section() { while ((getline l < bf) > 0) print l; close(bf) }
+    function emit(s) { out[++m] = s }
+    function section() { while ((getline l < bf) > 0) emit(l); close(bf) }
     { line[NR] = $0; n = NR }
     END {
-      # Wrapper pairs: nearest open/close, exact trimmed lines only.
+      # Wrapper pairs: nearest open/close, exact trimmed lines only. Any orphan tag
+      # is far more likely wreckage of a damaged block than prose — fail closed.
       gopen = 0; gpairs = 0
       for (i = 1; i <= n; i++) {
         t = trim(line[i])
         if (t == go) {
           if (gopen) skip(go " opened again before it was closed")
           gopen = i
-        } else if (t == gc && gopen) {
+        } else if (t == gc) {
+          if (!gopen) skip(gc " without a matching " go)
           gpairs++; gO = gopen; gC = i; gopen = 0
           if (gpairs > 1) skip("more than one " go " block")
         }
       }
       if (gopen) skip(go " is never closed")
-      # Own section pair, only inside the wrapper — outside mentions are inert.
-      sO = 0; sC = 0
-      if (gpairs == 1) {
-        sopen = 0; spairs = 0
-        for (i = gO + 1; i < gC; i++) {
-          t = trim(line[i])
-          if (t == so) {
-            if (sopen) skip(so " opened again before it was closed")
-            sopen = i
-          } else if (t == sc && sopen) {
-            spairs++; sO = sopen; sC = i; sopen = 0
-            if (spairs > 1) skip("more than one " so " section")
-          }
+      # Own section pair, scanned across the whole file: an orphan tag or a section
+      # outside the wrapper fails closed instead of being written around.
+      sO = 0; sC = 0; sopen = 0; spairs = 0
+      for (i = 1; i <= n; i++) {
+        t = trim(line[i])
+        if (t == so) {
+          if (sopen) skip(so " opened again before it was closed")
+          sopen = i
+        } else if (t == sc) {
+          if (!sopen) skip(sc " without a matching " so)
+          spairs++; sO = sopen; sC = i; sopen = 0
+          if (spairs > 1) skip("more than one " so " section")
         }
-        if (sopen) skip(so " is never closed")
       }
-      # First legacy region: a lone start with no end never delimited a block for
-      # the old installer either, so it is not a region here.
-      lO = 0; lC = 0
-      for (i = 1; i <= n && !lO; i++) if (index(trim(line[i]), ls) == 1) lO = i
-      if (lO) for (i = lO + 1; i <= n && !lC; i++) if (index(trim(line[i]), le) == 1) lC = i
-      if (!lC) lO = 0
+      if (sopen) skip(so " is never closed")
+      if (spairs == 1 && !gpairs) skip(so " section outside any " go " wrapper")
+      if (spairs == 1 && (sO < gO || sC > gC)) skip(so " section outside the " go " wrapper")
+      # Legacy region: exact historical marker lines only (a prose comment that
+      # merely starts like one is not a marker). Duplicated markers are ambiguous;
+      # a lone start never delimited a block for the old installer either.
+      lstarts = 0; lends = 0; lO = 0; lC = 0
+      for (i = 1; i <= n; i++) {
+        t = trim(line[i])
+        if (t == ls) { lstarts++; lO = lO ? lO : i }
+        else if (t == le) { lends++; lC = lC ? lC : i }
+      }
+      if (lstarts > 1) skip("more than one legacy DCP:START marker")
+      if (lends > 1) skip("more than one legacy DCP:END marker")
+      if (lstarts != 1 || lends != 1 || lC < lO) { lO = 0; lC = 0 }
 
+      endnl = hadnl
       if (gpairs == 1) {
         for (i = 1; i <= n; i++) {
           if (sO && i == sO) { section(); i = sC; continue }
           if (!sO && i == gC) section()
-          if (lO && i == lO) {
-            # The section content now lives inside the wrapper; fold the legacy
-            # block away, collapsing the doubled blank line it leaves behind.
-            i = lC
-            if (lO > 1 && trim(line[lO - 1]) == "" && i < n && trim(line[i + 1]) == "") i++
-            continue
-          }
-          print line[i]
+          if (lO && i == lO) { i = lC; continue }
+          emit(line[i])
         }
-        print (lO ? "MIGRATED" : (sO ? "REPLACED" : "APPENDED")) > "/dev/stderr"
-        exit 0
-      }
-      if (lO) {
+        verdict = lO ? "MIGRATED" : (sO ? "REPLACED" : "APPENDED")
+      } else if (lO) {
         for (i = 1; i <= n; i++) {
-          if (i == lO) { print go; section(); print gc; i = lC; continue }
-          print line[i]
+          if (i == lO) { emit(go); section(); emit(gc); i = lC; continue }
+          emit(line[i])
         }
-        print "MIGRATED" > "/dev/stderr"
-        exit 0
+        verdict = "MIGRATED"
+      } else {
+        for (i = 1; i <= n; i++) emit(line[i])
+        if (trim(line[n]) != "") emit("")
+        emit("# Operating guide")
+        emit(go); section(); emit(gc)
+        verdict = "APPENDED"; endnl = 1
       }
-      for (i = 1; i <= n; i++) print line[i]
-      if (trim(line[n]) != "") print ""
-      print "# Operating guide"
-      print go; section(); print gc
-      print "APPENDED" > "/dev/stderr"
+      for (j = 1; j <= m; j++) printf "%s%s", out[j], (j < m || endnl) ? "\n" : ""
+      print verdict > "/dev/stderr"
       exit 0
     }
-  ' "$target" > "$tmp" 2> "$tmp.status" || status=$?
+  ' "$resolved" > "$tmp" 2> "$tmp.status" || status=$?
   if [ "$status" -eq 3 ]; then
     echo "  ! $target: $(sed 's/^SKIP //' "$tmp.status") — left untouched; fix the tags and re-run"
+    rm -f "$tmp"
   elif [ "$status" -ne 0 ]; then
     echo "  ! $target: refresh failed (awk exit $status) — left untouched" >&2
+    rm -f "$tmp"
   else
-    mv "$tmp" "$target"
+    mv "$tmp" "$resolved"
     case "$(cat "$tmp.status")" in
       MIGRATED) echo "  migrated legacy markers to the managed section in $target" ;;
       REPLACED) echo "  refreshed managed section in $target" ;;
       APPENDED) echo "  appended managed section to $target" ;;
     esac
   fi
-  rm -f "$block" "$tmp" "$tmp.status"
+  rm -f "$block" "$tmp.status"
+  rmdir "$target.lock" 2>/dev/null || true
 }
 
 project_install() {

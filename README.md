@@ -62,16 +62,18 @@ git clone <this repo> && cd <repo> && ./install.sh
 
 | Surface | Claude Code | Codex CLI | Cursor |
 |---------|-------------|-----------|--------|
-| Always-on guide | `~/.claude/CLAUDE.md` (managed block) | `~/.codex/AGENTS.md` (managed block) | Settings → Rules → User Rules (manual paste, prompted by the script) |
+| Always-on guide | `~/.claude/CLAUDE.md` and every `~/.claude-*/CLAUDE.md` (managed section) | `~/.codex/AGENTS.md` (managed section) | Settings → Rules → User Rules (manual paste, prompted by the script) |
 | Skills | `~/.claude/skills/` (symlinks) | `~/.agents/skills/` (symlinks) | reads both trees automatically |
 
-Skills are symlinked, so repo edits are live immediately; the instruction blocks are marker-managed,
-so **update = `git pull && ./install.sh`**. For a repo that wants checked-in, team-visible
-guidance instead: `./install.sh --project <dir>`.
+Skills are symlinked, so repo edits are live immediately; the instruction sections are managed
+between `<DECENTLY-CAPABLE-POWERS>` tags inside a shared `<GENERATED>` wrapper (legacy
+`DCP:START/END` markers are migrated on the next run), so **update = `git pull && ./install.sh`**.
+For a repo that wants checked-in, team-visible guidance instead: `./install.sh --project <dir>`.
 
 Running several Claude Code profiles (`CLAUDE_CONFIG_DIR=~/.claude-<name>`)? The managed guide
-block reaches every profile whose `CLAUDE.md` already carries the marker, but skills need the
-profile named: `./install.sh --config-dir ~/.claude-work --config-dir ~/.claude-personal`
+section reaches **every** `~/.claude-*` profile directory automatically — its `CLAUDE.md` is
+created when absent — so rename any `.claude-*` directory that is not really a profile. Skills
+still need the profile named: `./install.sh --config-dir ~/.claude-work --config-dir ~/.claude-personal`
 links them there too, on top of the default targets. Without it, those profiles' skill links
 are hand-made and no update ever refreshes them.
 
