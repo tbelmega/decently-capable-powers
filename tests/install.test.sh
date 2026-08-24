@@ -422,20 +422,24 @@ case "$out" in *"more than one"*) ok "the ambiguity is named";;
   *) fail "the ambiguity was not named — got: $out";; esac
 rm -rf "$sandbox"
 
-echo "install.sh: alternate profiles opt in by section or legacy marker, never by mention"
+echo "install.sh: every alternate profile directory gets the section"
 new_sandbox
-mkdir -p "$home/.claude" "$home/.claude-legacy" "$home/.claude-tagged" "$home/.claude-mention"
+mkdir -p "$home/.claude" "$home/.claude-legacy" "$home/.claude-tagged" "$home/.claude-plain" "$home/.claude-fresh"
 printf '# legacy profile\n<!-- DCP:START — managed block; edit in the decently-capable-powers repo, then re-run install.sh -->\nOLD-PROFILE-BODY\n<!-- DCP:END -->\n' > "$home/.claude-legacy/CLAUDE.md"
 printf '# tagged profile\n<GENERATED>\n<DECENTLY-CAPABLE-POWERS>\nSTALE-PROFILE-BODY\n</DECENTLY-CAPABLE-POWERS>\n</GENERATED>\n' > "$home/.claude-tagged/CLAUDE.md"
-printf '# notes\nthe <DECENTLY-CAPABLE-POWERS> tag is discussed here\n' > "$home/.claude-mention/CLAUDE.md"
-cp "$home/.claude-mention/CLAUDE.md" "$sandbox/mention-before"
+printf '# plain profile\nthe <DECENTLY-CAPABLE-POWERS> tag is discussed here\n' > "$home/.claude-plain/CLAUDE.md"
+printf 'not a profile\n' > "$home/.claude-file"
 HOME="$home" "$install_sh" >/dev/null 2>&1
 check "run exits 0" "0" "$?"
 check "legacy profile migrated" "0" "$(grep -cF 'DCP:START' "$home/.claude-legacy/CLAUDE.md")"
 check "legacy profile refreshed" "0" "$(grep -cF 'OLD-PROFILE-BODY' "$home/.claude-legacy/CLAUDE.md")"
 check "tagged profile refreshed" "0" "$(grep -cF 'STALE-PROFILE-BODY' "$home/.claude-tagged/CLAUDE.md")"
 check "tagged profile keeps its head" "# tagged profile" "$(head -1 "$home/.claude-tagged/CLAUDE.md")"
-check "mention-only profile untouched" "0" "$(cmp -s "$sandbox/mention-before" "$home/.claude-mention/CLAUDE.md"; echo $?)"
+check "plain profile gains the section" "1" "$(grep -cxF '<DECENTLY-CAPABLE-POWERS>' "$home/.claude-plain/CLAUDE.md")"
+check "plain profile keeps its content" "# plain profile" "$(head -1 "$home/.claude-plain/CLAUDE.md")"
+check "the prose mention stays inert" "1" "$(grep -cF 'is discussed here' "$home/.claude-plain/CLAUDE.md")"
+check "empty profile dir gets a config" "1" "$([ -f "$home/.claude-fresh/CLAUDE.md" ] && echo 1 || echo 0)"
+check "a stray file named like a profile is not one" "not a profile" "$(cat "$home/.claude-file")"
 rm -rf "$sandbox"
 
 # new_sandbox's own guard is the only thing between a failed mktemp and paths derived

@@ -9,9 +9,9 @@
 #   - Refreshes the operating-guide section (a <DECENTLY-CAPABLE-POWERS> tag pair
 #     inside the shared <GENERATED> wrapper) in ~/.claude/CLAUDE.md (Claude Code)
 #     and ~/.codex/AGENTS.md (Codex), migrating legacy DCP:START/END markers.
-#     Alternate Claude Code profiles (CLAUDE_CONFIG_DIR=~/.claude-<name>) are
-#     refreshed too when their CLAUDE.md already carries the section — they opt
-#     in by having it.
+#     Every alternate Claude Code profile (CLAUDE_CONFIG_DIR=~/.claude-<name>)
+#     is targeted like the default profile: its CLAUDE.md gets the section,
+#     created if absent.
 #   - Grok Build needs no targets of its own: it reads ~/.agents/skills/
 #     natively and loads ~/.claude/CLAUDE.md via its Claude compat, which is on
 #     by default — a ~/.grok/AGENTS.md copy would double-load the guide
@@ -29,9 +29,9 @@
 #   machine with several profiles wires them all in one invocation:
 #     ./install.sh --config-dir ~/.claude-work --config-dir ~/.claude-personal
 #   The default ~/.claude and ~/.agents targets are always linked as well. The
-#   operating-guide block needs no such flag — alternate profiles opt into it by
-#   already carrying the marker — but skills have no marker to opt in with, so
-#   without this flag their links are hand-made and never refreshed.
+#   operating-guide section needs no such flag — every ~/.claude-* profile is
+#   targeted automatically — but skills carry no such convention, so without
+#   this flag their links are hand-made and never refreshed.
 #
 # --project <dir>: refresh the managed block in <dir>/AGENTS.md and ensure
 #   <dir>/CLAUDE.md imports it — for repos that want checked-in, team-visible
@@ -447,15 +447,13 @@ seed_local_files
 
 echo "Operating guide (managed section):"
 refresh_block "$HOME/.claude/CLAUDE.md"
-# Alternate profiles opt in by already carrying the section (the exact-line tag, or
-# the legacy marker awaiting migration); never seed them here. A prose mention of the
-# tag is not the tag on its own line and must not opt a profile in.
-for alt_claude_md in "$HOME"/.claude-*/CLAUDE.md; do
-  if [ -f "$alt_claude_md" ] &&
-     { grep -qE "^[[:space:]]*<DECENTLY-CAPABLE-POWERS>[[:space:]]*$" "$alt_claude_md" ||
-       grep -qF "$LEGACY_START" "$alt_claude_md"; }; then
-    refresh_block "$alt_claude_md"
-  fi
+# Every alternate profile directory is targeted like the default one (owner ruling
+# 2026-08-23; previously profiles opted in by already carrying the marker). The
+# trailing-slash glob matches directories only, and an unmatched glob stays literal,
+# which the -d test filters out.
+for alt_profile in "$HOME"/.claude-*/; do
+  [ -d "$alt_profile" ] || continue
+  refresh_block "${alt_profile%/}/CLAUDE.md"
 done
 refresh_block "$HOME/.codex/AGENTS.md"
 
