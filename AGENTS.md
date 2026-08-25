@@ -67,16 +67,37 @@ check must be the original, unweakened one. Ban "should", "seems", "probably". â
 checklist, load `verification-before-completion`.
 
 ## Commits
-End each task by running typecheck + tests; commit when green with a clear message. Aim for small,
-self-contained, green commits. Follow explicit commit-message conventions in the repository. If none exist, follow a clear,
-consistent pattern in its recent history. If neither provides useful guidance, default to:
-- Write the subject in imperative mood and sentence case.
-- Keep the message concise but self-sufficient. Describe the change, and explain its reason when
-  it is not evident from the change itself.
-- Do not use context-dependent subjects such as `Close phase 4`. References may supplement a
-  descriptive subject, but must not replace it.
-- If an unpublished commit only fixes or polishes the preceding commit, amend or squash it when
-  practical. Do not rewrite shared history without explicit authorization.
+End each task by running typecheck + tests; commit when green so the work is recoverable. Distinguish
+temporary workstream history from the durable history merged into the integration branch. On an
+unmerged agent or feature branch, use whatever commit granularity makes implementation, recovery,
+and review effective. When working linearly on one coherent change, prefer amending the current
+commit; separate temporary commits are also acceptable when they help the review mechanism.
+
+Before merging into the integration branch, consolidate the workstream into durable logical
+commits. Every commit entering that branch must meet the requirements below. Also follow compatible
+commit-message conventions in the repository or its house rules. If an explicit convention
+conflicts with one requirement, follow it only for that conflict and retain every non-conflicting
+requirement:
+- Write the subject in imperative mood and sentence case. It must describe the change's effect or
+  intention and stand on its own in a long commit log, without requiring the body, a plan, a spec,
+  or prior conversation to explain it.
+- Do not put internal references or process bookkeeping in the subject. This includes plan phases,
+  work-package or acceptance-criterion identifiers, priority labels, and review-round numbers such
+  as `C4`, `P2`, or `round 3`. Put useful references in the body instead. An external ticket
+  identifier may appear in the subject only when an explicit repository or house rule requires it.
+- Use the body for rationale, tradeoffs, implementation detail, and references that are not evident
+  from the subject.
+- One coherent feature, fix, specification, or policy change normally becomes one final commit,
+  including its fixups, polishing, test repairs, review remediations, and corrections. Preserve the
+  final net change, not intermediate states that were never integrated or deployed and not the
+  chronology of how an agent arrived at it.
+- Keep multiple integration commits only when each is an independently meaningful, complete change
+  that a future maintainer can understand and reasonably revert on its own. Review convenience
+  alone is not a reason to preserve separate commits permanently.
+- Keep unrelated changes separate. If a pushed, unmerged branch
+  needs consolidation, use the repository's approved squash or branch-rewrite mechanism before
+  landing. Do not rewrite the integration branch or other history people rely on without explicit
+  authorization.
 
 ## Worktrees and checkouts â€” the user assigns them, you never change them
 Work where you were started. **Never switch, create, or delete a git worktree, and never check
