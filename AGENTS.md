@@ -78,13 +78,15 @@ commits. Every commit entering that branch must meet the requirements below. Als
 commit-message conventions in the repository or its house rules. If an explicit convention
 conflicts with one requirement, follow it only for that conflict and retain every non-conflicting
 requirement:
-- Write the subject in imperative mood and sentence case. It must describe the change's effect or
-  intention and stand on its own in a long commit log, without requiring the body, a plan, a spec,
-  or prior conversation to explain it.
+- Write the subject in imperative mood and sentence case. It must describe the change on its own
+  terms by stating its effect or intention, and stand on its own in a long commit log without
+  requiring the body, a plan, a spec, or prior conversation to explain it.
 - Do not put internal references or process bookkeeping in the subject. This includes plan phases,
-  work-package or acceptance-criterion identifiers, priority labels, and review-round numbers such
-  as `C4`, `P2`, or `round 3`. Put useful references in the body instead. An external ticket
-  identifier may appear in the subject only when an explicit repository or house rule requires it.
+  task numbers, work-package or acceptance-criterion identifiers, priority labels, finding
+  identifiers, and review-round numbers such as `C4`, `P2`, or `round 3`. In a year, those
+  references will not explain what changed. Put useful references in the body or a trailer instead.
+  An external ticket identifier may appear in the subject only when an explicit repository or house
+  rule requires it.
 - Use the body for rationale, tradeoffs, implementation detail, and references that are not evident
   from the subject.
 - One coherent feature, fix, specification, or policy change normally becomes one final commit,
