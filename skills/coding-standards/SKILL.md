@@ -59,6 +59,11 @@ accident.
 - **Don't repeat type information** — Doc comments should not duplicate what the type
   signature already says
 - **Don't document trivial logic** — Simple, straightforward code doesn't need comments
+- **Don't anchor comments to the work that produced them** - Specs, plans, tickets, prompts,
+  review findings, phase and task numbers are transient; a reader a year from now cannot
+  resolve them, and the comment outlives them. State the constraint itself, not its
+  provenance. A durable external reference (upstream bug, RFC, standard) is fine when it
+  explains behavior the code cannot.
 
 ## Naming Conventions
 
