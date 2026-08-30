@@ -1,36 +1,35 @@
 ---
 name: receiving-code-review
-description: Use when receiving code review feedback, before implementing suggestions — technical evaluation and verification, not performative agreement or blind implementation
+description: Use when receiving code review feedback, before implementing suggestions: technical evaluation and verification, not performative agreement or blind implementation
 ---
 
 # Receiving Code Review
 
 Code review requires technical evaluation, not emotional performance.
 
-**Core principle:** Verify before implementing. Ask before assuming. Technical correctness over
-social comfort.
+**Core principle:** Verify before implementing. Ask before assuming.
 
 ## The Response Pattern
 
 1. **Read** the complete feedback without reacting
-2. **Understand** — restate each requirement in your own words, or ask
-3. **Verify** — check each claim against the actual codebase
-4. **Evaluate** — technically sound for THIS codebase?
-5. **Respond** — technical acknowledgment or reasoned pushback
-6. **Implement** — one item at a time, test each
+2. **Understand** - restate each requirement in your own words, or ask
+3. **Verify** - check each claim against the actual codebase
+4. **Evaluate** - technically sound for THIS codebase?
+5. **Respond** - technical acknowledgment or reasoned pushback
+6. **Implement** - one item at a time, test each
 
 ## Banned Responses
 
-- "You're absolutely right!" / "Great point!" — performative agreement
-- Any gratitude expression — the fix itself shows you heard the feedback
-- "Let me implement that now" — before verifying the claim
+- "You're absolutely right!" / "Great point!" - performative agreement
+- Any gratitude expression - the fix itself shows you heard the feedback
+- "Let me implement that now" - before verifying the claim
 
 Instead: restate the requirement, ask the clarifying question, push back with technical
 reasoning, or just make the fix and show it.
 
 ## Unclear Feedback
 
-If any item is unclear, stop — don't implement the clear ones yet. Items may be related, and
+If any item is unclear, stop; don't implement the clear ones yet. Items may be related, and
 partial understanding produces wrong implementations.
 
 > "I understand items 1, 2, 3, 6. Need clarification on 4 and 5 before proceeding."
@@ -57,7 +56,7 @@ fixes. Test each individually; verify no regressions.
 
 A finding is evidence of a pattern, not merely a place to patch. Before marking one fixed:
 
-1. **Name its root-cause pattern** in one sentence - the mistake, not the symptom.
+1. **Name its root-cause pattern** in one sentence: the mistake, not the symptom.
 2. **Sweep the whole review range for siblings**, plus the files the changed code was copied
    from or modelled on, and identify them before choosing the finding's disposition.
 3. **Correcting a fact or a contract? Sweep every restatement of it.** Update each, or replace
@@ -73,21 +72,16 @@ tests or the inventory grow: "the suite passes" survives, "59 checks pass" does 
 
 ## What a Clean Round Does Not Prove
 
-A reviewer reporting complete file coverage has not certified that the defects are all found —
+A reviewer reporting complete file coverage has not certified that the defects are all found -
 a clean round means that pass produced no finding. The round cap bounds cost; it does not
 demonstrate convergence. Report either as what it is, never as "the code is now correct".
 
 ## When You Pushed Back and Were Wrong
 
-State the correction factually and move on: "Verified — you're right, X does Y. Fixing."
+State the correction factually and move on: "Verified, you're right: X does Y. Fixing."
 No long apology, no defending the original pushback.
 
 ## GitHub Thread Replies
 
 Reply to inline review comments in the comment thread
 (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies`), not as a top-level PR comment.
-
-## Bottom Line
-
-External feedback is a set of claims to verify, not orders to follow — and not compliments to
-return.

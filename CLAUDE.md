@@ -1,6 +1,6 @@
 # Contributor guidelines
 
-Operating guidance (the always-on working defaults) is the source of truth in @AGENTS.md — it
+Operating guidance (the always-on working defaults) is the source of truth in @AGENTS.md - it
 applies when working in this repo too. This file adds only the fork's design principles and
 repo-specific notes.
 
@@ -29,7 +29,7 @@ model won't do on its own, and leans on native harness capabilities for everythi
   edit by hand.
 - **Multi-harness by verified convention.** Primary target is Claude Code; Codex, Cursor, and
   Grok Build are served by the same files through the agentskills.io SKILL.md standard and
-  AGENTS.md — via `install.sh`, no per-harness packaging. The exact load paths are verified
+  AGENTS.md - via `install.sh`, no per-harness packaging. The exact load paths are verified
   research (`ASSUMPTIONS.md` A2/A3/A20), not folklore.
 - **Evidence over vibes.** Guidance exists because a dated, sourced claim in `ASSUMPTIONS.md`
   justifies it. Adding or removing guidance means updating the registry.
@@ -43,12 +43,12 @@ model won't do on its own, and leans on native harness capabilities for everythi
   (model-selection's roster) uses a checked-in skeleton `<base>.template.md` seeded to
   `<base>.local.md` by install.sh; **shareable stack content** (coding-standards' `stacks/`)
   uses published base files loaded directly per project stack, each with an optional
-  `<stack>.local.md` delta that wins on conflict — bases update via `git pull`, deltas survive.
+  `<stack>.local.md` delta that wins on conflict - bases update via `git pull`, deltas survive.
 - `AGENTS.md` is the always-on operating guide: an essence per discipline plus "→ load skill X"
   pointers, distributed as a marker-managed block by `install.sh`. Edit it here, then re-run
   `install.sh`.
 - Any change to guidance that rests on an empirical claim goes through `ASSUMPTIONS.md`: new
   guidance adds a row; removed guidance retires one. The `self-update` skill re-verifies rows.
-- Keep skill content tight — length is a cost. Prefer one sharp rule over three examples.
+- Keep skill content tight - length is a cost. Prefer one sharp rule over three examples.
 - Research notes go in `docs/research/`; brainstorming specs in `docs/specs/`; the rebuild's
   decision log is `docs/mission-log.md`.

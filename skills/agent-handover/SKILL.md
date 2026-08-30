@@ -1,6 +1,6 @@
 ---
 name: agent-handover
-description: Use when a session should end and another agent should continue — context degraded, usage limit near, or the work is moving to a different harness or model
+description: Use when a session should end and another agent should continue: context degraded, usage limit near, or the work is moving to a different harness or model
 ---
 
 # Agent Handover
@@ -9,7 +9,7 @@ Prepare a compact handoff so the next agent starts cleanly without the full conv
 
 ## Use When
 
-- Context pressure is high or the session has degraded — long sessions rot, and compaction can
+- Context pressure is high or the session has degraded - long sessions rot, and compaction can
   silently drop constraints.
 - A usage limit is near and the work should continue on a different harness or model
   (Claude Code ↔ Codex ↔ Cursor).
@@ -33,7 +33,7 @@ Objective: <what the next agent accomplishes now>
 Current state: <done / remaining>
 Source of truth: <files to trust first>
 Next step: <first concrete action>
-Constraints and risks: <working agreements that must hold — TDD on/off, isolation,
+Constraints and risks: <working agreements that must hold: TDD on/off, isolation,
   verify commands, scope; known traps and failed approaches>
 Unpersisted context: <facts or decisions that exist only in this conversation>
 ```
@@ -43,7 +43,7 @@ Unpersisted context: <facts or decisions that exist only in this conversation>
 - Make the next agent's first step obvious.
 - Compress the session, don't narrate it. Prefer repository artifacts over chat summary.
 - Name unresolved decisions, blockers, and tentative conclusions as such.
-- Carry the working agreements explicitly — the next harness or model won't infer them from a
+- Carry the working agreements explicitly - the next harness or model won't infer them from a
   clean repo.
 
 ## Common Mistakes

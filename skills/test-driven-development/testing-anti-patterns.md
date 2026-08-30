@@ -4,18 +4,17 @@
 
 ## Overview
 
-Test real behavior, not mock behavior. Mocks isolate; they are not the thing being tested.
-
-**Core principle:** Test what the code does, not what the mocks do.
+Test what the code does, not what the mocks do. Mocks isolate; they are not the thing being
+tested.
 
 ## Iron Laws
 
 ```
-1. NEVER mock project's own code — only at system boundaries (3rd party, external APIs)
+1. NEVER mock project's own code - only at system boundaries (3rd party, external APIs)
 2. NEVER test mock behavior
 3. NEVER add test-only methods to production classes
 4. NEVER mock without understanding dependencies
-5. NEVER duplicate calculation logic in tests — hardcode expected results
+5. NEVER duplicate calculation logic in tests - hardcode expected results
 ```
 
 ## Anti-Pattern 1: Testing Mock Behavior
@@ -24,7 +23,7 @@ Test real behavior, not mock behavior. Mocks isolate; they are not the thing bei
 
 **Fix:** Test real component or unmock it. If mocking for isolation, assert on real behavior, not mock presence.
 
-**Gate:** Before asserting on any mock element — Am I testing real behavior or mock existence? If mock existence → delete assertion or unmock.
+**Gate:** before asserting on any mock element, ask: am I testing real behavior or mock existence? If mock existence → delete assertion or unmock.
 
 ## Anti-Pattern 2: Test-Only Methods in Production
 
@@ -32,7 +31,7 @@ Test real behavior, not mock behavior. Mocks isolate; they are not the thing bei
 
 **Fix:** Move to test utilities. Session has no `destroy()`; test-utils provide `cleanupSession(session)`.
 
-**Gate:** Before adding method to production class — Is this only used by tests? If yes → don't add. Put in test utilities. Does this class own the resource lifecycle? If no → wrong class.
+**Gate:** before adding a method to a production class, ask: is this only used by tests? If yes → don't add. Put in test utilities. Does this class own the resource lifecycle? If no → wrong class.
 
 ## Anti-Pattern 3: Mocking Without Understanding
 
@@ -40,7 +39,7 @@ Test real behavior, not mock behavior. Mocks isolate; they are not the thing bei
 
 **Fix:** Understand dependency chain. Mock at lowest level (the slow/external operation). Or use test doubles that preserve necessary behavior.
 
-**Gate:** Before mocking — What side effects does the real method have? Does this test depend on any? If depends on side effects → mock lower level, not the method test depends on. If unsure → run with real implementation first, observe, then add minimal mock.
+**Gate:** before mocking, ask: what side effects does the real method have? Does this test depend on any? If depends on side effects → mock lower level, not the method test depends on. If unsure → run with real implementation first, observe, then add minimal mock.
 
 ## Anti-Pattern 4: Incomplete Mocks
 
@@ -48,7 +47,7 @@ Test real behavior, not mock behavior. Mocks isolate; they are not the thing bei
 
 **Fix:** Mirror real API completely. Include all fields real response contains.
 
-**Gate:** Before creating mock response — What fields does real API return? Include all. Partial mocks fail silently.
+**Gate:** before creating a mock response, ask: what fields does the real API return? Include all. Partial mocks fail silently.
 
 ## Anti-Pattern 5: Tests as Afterthought
 
@@ -60,7 +59,7 @@ Test real behavior, not mock behavior. Mocks isolate; they are not the thing bei
 
 **Violation:** Mocking your own services, repositories, or internal modules. Test passes when mock is present, fails with real code.
 
-**Fix:** Mock only at system boundaries—3rd party APIs, external services, databases (use test doubles or in-memory implementations). Use real project code everywhere else.
+**Fix:** Mock only at system boundaries: 3rd party APIs, external services, databases (use test doubles or in-memory implementations). Use real project code everywhere else.
 
 ## Anti-Pattern 7: Duplicating Calculation Logic in Tests
 
@@ -86,12 +85,12 @@ Test real behavior, not mock behavior. Mocks isolate; they are not the thing bei
 
 Frontend tests tend to run slower and be flakier than backend. Same principles apply; some adjustments:
 
-- **Extract logic** — Validation, formatting, state transforms as pure functions. Unit test without React. Fast, deterministic.
-- **Test behavior** — Query by role/label (React Testing Library). Avoid testing implementation details.
-- **Mock at boundaries** — API (MSW), timers, Clock. Not internal components.
-- **Condition-based waiting** — `waitFor`, `findBy` instead of `setTimeout`. Wait for conditions, not fixed delays.
-- **Testing Trophy** — Broad base: type checks. Upper middle: integration-style tests. Fewer fine-grained unit tests in the lower middle. Small E2E crown at top.
-- **Flaky = bug** — Fix race conditions and waiting, don't paper over with retries.
+- **Extract logic** - Validation, formatting, state transforms as pure functions. Unit test without React. Fast, deterministic.
+- **Test behavior** - Query by role/label (React Testing Library). Avoid testing implementation details.
+- **Mock at boundaries** - API (MSW), timers, Clock. Not internal components.
+- **Condition-based waiting** - `waitFor`, `findBy` instead of `setTimeout`. Wait for conditions, not fixed delays.
+- **Testing Trophy** - Broad base: type checks. Upper middle: integration-style tests. Fewer fine-grained unit tests in the lower middle. Small E2E crown at top.
+- **Flaky = bug** - Fix race conditions and waiting, don't paper over with retries.
 
 Refine based on your stack and experience.
 
@@ -106,7 +105,7 @@ Refine based on your stack and experience.
 | Test-only methods in production | Move to test utilities |
 | Mock without understanding | Understand dependencies first, mock minimally |
 | Incomplete mocks | Mirror real API completely |
-| Tests as afterthought | TDD — tests first |
+| Tests as afterthought | TDD - tests first |
 | Over-complex mocks | Consider integration tests |
 
 ## Red Flags
@@ -124,4 +123,4 @@ Refine based on your stack and experience.
 
 Write test first → forces thinking about what you're testing. Watch it fail → confirms test tests real behavior. Minimal implementation → no test-only creep. Real dependencies first → see what test needs before mocking.
 
-**If you're testing mock behavior, you violated TDD** — you added mocks without watching test fail against real code first.
+**If you're testing mock behavior, you violated TDD:** you added mocks without watching the test fail against real code first.

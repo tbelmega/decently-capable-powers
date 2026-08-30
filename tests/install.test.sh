@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# tests/install.test.sh — regression coverage for install.sh's argument handling
+# tests/install.test.sh - regression coverage for install.sh's argument handling
 # and skill linking.
 #
 # Every case runs a *copy* of the installer inside a temp fixture, with HOME
 # pointed there too. Both halves matter: HOME isolation contains the config
 # writes, and the copy contains seed_local_files, which writes *.local.md next to
-# the installer it runs from — the real checkout, if the real installer were used.
+# the installer it runs from - the real checkout, if the real installer were used.
 #
 # Portability: POSIX shell builtins, readlink without -f, and globs only. No GNU
 # find extensions (-printf, -lname, -xtype) and no `readlink -f`, because install.sh
 # supports macOS, whose BSD find and readlink lack them. Assertions stay inside the
-# sandbox — nothing may depend on host state such as an existing /skills.
+# sandbox - nothing may depend on host state such as an existing /skills.
 #
 # Run: ./tests/install.test.sh   (exit 0 = all cases pass; failures are listed)
 
@@ -23,12 +23,12 @@ failures=0
 fail() { echo "  FAIL: $*"; failures=$((failures + 1)); }
 ok() { echo "  ok: $*"; }
 check() { # <description> <expected> <actual>
-  if [ "$2" = "$3" ]; then ok "$1"; else fail "$1 — expected '$2', got '$3'"; fi
+  if [ "$2" = "$3" ]; then ok "$1"; else fail "$1 - expected '$2', got '$3'"; fi
 }
 
 # A disposable fixture: the installer, the guide it manages, and the skills it
 # links. $fixture/install.sh resolves REPO_DIR to the fixture, so every write the
-# installer makes — links, managed blocks, seeded *.local.md — stays in $sandbox.
+# installer makes - links, managed blocks, seeded *.local.md - stays in $sandbox.
 new_sandbox() {
   # Deriving paths from an empty $sandbox would compute /home and /repo and write
   # there, so a failed mktemp must abort before any path is built from it.
@@ -60,7 +60,7 @@ new_sandbox() {
 # target on both GNU and BSD; -L/-e distinguish link, live link, and dangling.
 link_target() { if [ -L "$1" ]; then readlink "$1"; else echo "<not a link>"; fi; }
 
-count_links_into_fixture() { # <skills dir> — links whose target is inside $fixture/skills
+count_links_into_fixture() { # <skills dir> - links whose target is inside $fixture/skills
   local n=0 entry
   for entry in "$1"/*; do
     [ -L "$entry" ] || continue
@@ -69,7 +69,7 @@ count_links_into_fixture() { # <skills dir> — links whose target is inside $fi
   echo "$n"
 }
 
-list_links() { # <skills dir> — "name target" per line, sorted
+list_links() { # <skills dir> - "name target" per line, sorted
   local entry
   for entry in "$1"/*; do
     [ -L "$entry" ] || continue
@@ -124,7 +124,7 @@ check "config dir whose skills path is a file exits nonzero" "1" "$status"
 check "no default targets written for an unusable skills path" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
 
 # An existing but unwritable skills directory passes mkdir -p, which creates
-# nothing — only attempting a link proves it. (root ignores mode bits, so skip.)
+# nothing - only attempting a link proves it. (root ignores mode bits, so skip.)
 if [ "$(id -u)" -ne 0 ]; then
   mkdir -p "$sandbox/profile-readonly/skills"
   chmod 555 "$sandbox/profile-readonly/skills"
@@ -201,7 +201,7 @@ check "repair run exits 0" "0" "$?"
 check "dangling link repointed at this repo" "$fixture/skills/brainstorming" "$(link_target "$profile/skills/brainstorming")"
 check "dangling foreign link also repointed under the explicit flag" "$fixture/skills/agent-handover" "$(link_target "$profile/skills/agent-handover")"
 check "live foreign link still untouched" "$sandbox/elsewhere/research" "$(link_target "$profile/skills/research")"
-case "$out" in *"is not a link to this repo — left untouched"*) ok "live foreign link is reported";;
+case "$out" in *"is not a link to this repo - left untouched"*) ok "live foreign link is reported";;
   *) fail "live foreign link was not reported";; esac
 case "$out" in *"was dangling: $sandbox/gone/skills/brainstorming"*)
     ok "repair reports the exact target it replaced";;
@@ -227,8 +227,8 @@ if [ "$(id -u)" -ne 0 ]; then
   check "repair run exits 0" "0" "$?"
   check "the unstatable link keeps its target" "$sandbox/vault/live-skill" \
     "$(link_target "$profile/skills/research")"
-  case "$out" in *"cannot be resolved — left untouched"*) ok "the unstatable link is reported";;
-    *) fail "the unstatable link was not reported — got: $out";; esac
+  case "$out" in *"cannot be resolved - left untouched"*) ok "the unstatable link is reported";;
+    *) fail "the unstatable link was not reported - got: $out";; esac
   case "$out" in *"denies search permission"*) ok "the report names the cause";;
     *) fail "the report does not name the cause";; esac
   check "a provably absent target is still repaired in the same run" "$fixture/skills/brainstorming" \
@@ -258,9 +258,9 @@ if [ "$(id -u)" -ne 0 ]; then
   check "the looping link keeps its target" "$sandbox/loop-a/skill" \
     "$(link_target "$profile/skills/brainstorming")"
   # Each cause needs a different manual fix, so the diagnostic must not blame permissions
-  # for a loop — there is no directory to chmod.
+  # for a loop - there is no directory to chmod.
   case "$out" in *"symlink chain loops"*) ok "the loop is reported as a loop";;
-    *) fail "the loop was not reported as a loop — got: $out";; esac
+    *) fail "the loop was not reported as a loop - got: $out";; esac
   chmod 755 "$sandbox/private"
   rm -rf "$sandbox"
 else
@@ -269,7 +269,7 @@ fi
 
 # The same link spelled two ways is still one link. A cycle that comes back through an
 # equivalent spelling must be recognised as a cycle, not run out the hop limit and be
-# reported as an over-long chain — the operator would be told the wrong thing to fix.
+# reported as an over-long chain - the operator would be told the wrong thing to fix.
 echo "install.sh: a loop that closes through an aliased path is reported as a loop"
 new_sandbox
 profile="$home/.claude-alias"
@@ -284,7 +284,7 @@ check "repair run exits 0" "0" "$?"
 check "the aliased loop keeps its target" "$sandbox/loop-a/skill" \
   "$(link_target "$profile/skills/brainstorming")"
 case "$out" in *"symlink chain loops"*) ok "the aliased loop is reported as a loop";;
-  *) fail "the aliased loop was not reported as a loop — got: $out";; esac
+  *) fail "the aliased loop was not reported as a loop - got: $out";; esac
 rm -rf "$sandbox"
 
 # Chain length alone proves nothing: a long chain ending in a missing path is as dangling as
@@ -322,7 +322,7 @@ check "repair run exits 0" "0" "$?"
 check "an over-long chain keeps its target" "$sandbox/deep-0/research" \
   "$(link_target "$profile/skills/research")"
 case "$out" in *"exceeds 64 hops"*) ok "the hop limit is reported as the cause";;
-  *) fail "the hop limit was not reported — got: $out";; esac
+  *) fail "the hop limit was not reported - got: $out";; esac
 rm -rf "$sandbox"
 
 echo "install.sh: creates the tagged guide section on a fresh home"
@@ -336,7 +336,7 @@ check "section tag present" "1" "$(grep -cxF '<DECENTLY-CAPABLE-POWERS>' "$claud
 check "section closed" "1" "$(grep -cxF '</DECENTLY-CAPABLE-POWERS>' "$claude_md")"
 check "codex config tagged too" "1" "$(grep -cxF '<GENERATED>' "$home/.codex/AGENTS.md")"
 case "$out" in *"created managed section"*) ok "fresh run reports creation";;
-  *) fail "fresh run did not report creation — got: $out";; esac
+  *) fail "fresh run did not report creation - got: $out";; esac
 
 echo "install.sh: a second run leaves the section byte-identical"
 cp "$claude_md" "$sandbox/before"
@@ -376,7 +376,7 @@ check "custom head preserved" "# Operating guide" "$(head -1 "$home/.claude/CLAU
 check "custom tail preserved" "1" "$(grep -cxF '# my custom tail' "$home/.claude/CLAUDE.md")"
 check "wrapper present once" "1" "$(grep -cxF '<GENERATED>' "$home/.claude/CLAUDE.md")"
 case "$out" in *"migrated legacy markers"*) ok "migration is reported";;
-  *) fail "migration was not reported — got: $out";; esac
+  *) fail "migration was not reported - got: $out";; esac
 cp "$home/.claude/CLAUDE.md" "$sandbox/after-migration"
 HOME="$home" "$install_sh" >/dev/null 2>&1
 check "post-migration rerun exits 0" "0" "$?"
@@ -412,14 +412,14 @@ out="$(HOME="$home" "$install_sh" 2>&1)"
 check "run still exits 0" "0" "$?"
 check "malformed file untouched" "0" "$(cmp -s "$sandbox/malformed-before" "$home/.claude/CLAUDE.md"; echo $?)"
 case "$out" in *"left untouched"*) ok "the skip is reported";;
-  *) fail "the skip was not reported — got: $out";; esac
+  *) fail "the skip was not reported - got: $out";; esac
 printf '<GENERATED>\na\n</GENERATED>\n<GENERATED>\nb\n</GENERATED>\n' > "$home/.claude/CLAUDE.md"
 cp "$home/.claude/CLAUDE.md" "$sandbox/double-before"
 out="$(HOME="$home" "$install_sh" 2>&1)"
 check "double-wrapper run exits 0" "0" "$?"
 check "double-wrapper file untouched" "0" "$(cmp -s "$sandbox/double-before" "$home/.claude/CLAUDE.md"; echo $?)"
 case "$out" in *"more than one"*) ok "the ambiguity is named";;
-  *) fail "the ambiguity was not named — got: $out";; esac
+  *) fail "the ambiguity was not named - got: $out";; esac
 rm -rf "$sandbox"
 
 echo "install.sh: every alternate profile directory gets the section"
@@ -566,7 +566,7 @@ check "no lock or temp litter beside the target" "0" "$(set -- "$home/.claude"/C
 rm -rf "$sandbox"
 
 # new_sandbox's own guard is the only thing between a failed mktemp and paths derived
-# from an empty $sandbox — /home and /repo, written to and later rm -rf'd. Proving it
+# from an empty $sandbox - /home and /repo, written to and later rm -rf'd. Proving it
 # fires means re-running this very file with mktemp stubbed out; DCP_TEST_NO_RECURSE
 # keeps the child from reaching this case, whatever the stub does upstream of it.
 if [ -z "${DCP_TEST_NO_RECURSE:-}" ]; then
@@ -574,7 +574,7 @@ if [ -z "${DCP_TEST_NO_RECURSE:-}" ]; then
   # The stubs live inside a fixture from new_sandbox rather than in a second mktemp -d of
   # their own: a separate allocation would need the same guard duplicated around it, and a
   # successful-but-empty result there would put the stubs and the witness at /mkdir, /cp,
-  # /rm and /witness — the very failure class these cases exist to pin down.
+  # /rm and /witness - the very failure class these cases exist to pin down.
   new_sandbox
   stub_dir="$sandbox/stubs"
   case "$stub_dir" in
@@ -585,7 +585,7 @@ if [ -z "${DCP_TEST_NO_RECURSE:-}" ]; then
   witness="$stub_dir/witness"
 
   # Two layers, because each covers what the other cannot. DCP_TEST_GUARD_PROBE stops the
-  # child inside new_sandbox, so a child whose guard has regressed never reaches a case —
+  # child inside new_sandbox, so a child whose guard has regressed never reaches a case -
   # the cases write via shell redirection and ln, which PATH stubs cannot intercept, and
   # against an empty $sandbox those land on host-root paths. The stubs below then cover
   # what the probe cannot: they record any mutating command run *before* the guard, which
@@ -606,7 +606,7 @@ EOF
   guard_out="$(DCP_TEST_NO_RECURSE=1 DCP_TEST_GUARD_PROBE=1 PATH="$stub_dir:$PATH" bash "$TEST_FILE" 2>&1)"
   check "a failing mktemp aborts the run with exit 2" "2" "$?"
   case "$guard_out" in *"FATAL: mktemp -d failed"*) ok "the failing-mktemp branch names itself";;
-    *) fail "a failing mktemp produced no FATAL message — got: $guard_out";; esac
+    *) fail "a failing mktemp produced no FATAL message - got: $guard_out";; esac
   check "a failing mktemp touches no path" "" "$(cat "$witness")"
 
   printf '#!/bin/sh\nexit 0\n' > "$stub_dir/mktemp"
@@ -614,7 +614,7 @@ EOF
   guard_out="$(DCP_TEST_NO_RECURSE=1 DCP_TEST_GUARD_PROBE=1 PATH="$stub_dir:$PATH" bash "$TEST_FILE" 2>&1)"
   check "an empty mktemp result aborts the run with exit 2" "2" "$?"
   case "$guard_out" in *"produced no usable directory"*) ok "the empty-result branch names itself";;
-    *) fail "an empty mktemp result produced no FATAL message — got: $guard_out";; esac
+    *) fail "an empty mktemp result produced no FATAL message - got: $guard_out";; esac
   check "an empty mktemp result touches no path" "" "$(cat "$witness")"
 
   rm -rf "$sandbox"

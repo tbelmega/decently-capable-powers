@@ -1,13 +1,18 @@
 ---
 name: research
-description: Use when you need to map how a codebase, system, or feature currently works before planning or implementing against it — or when asked to document current behavior in depth
+description: Use when you need to map how a codebase, system, or feature currently works before planning or implementing against it, or when asked to document current behavior in depth
 ---
 
 # Research
 
-Research is a deep-read workflow for understanding current behavior before planning or implementation.
+Research is a deep-read workflow for understanding current behavior before planning or
+implementation.
 
-Before starting research, check `docs/research/` for documents about the topic or closely related topics. If any exist, defer the research workflow: read them first, summarize what they cover and their dates for the user, then offer to (1) stop researching and answer the user's questions from the existing documents, (2) verify the documents against the current code and update them if necessary, or (3) proceed with the full research workflow.
+Before starting research, check `docs/research/` for documents about the topic or closely
+related topics. If any exist, defer the research workflow: read them first, summarize what they
+cover and their dates for the user, then offer to (1) stop researching and answer the user's
+questions from the existing documents, (2) verify the documents against the current code and
+update them if necessary, or (3) proceed with the full research workflow.
 
 ## Requirements
 
@@ -22,7 +27,8 @@ Before starting research, check `docs/research/` for documents about the topic o
 
 - Write the findings to `docs/research/YYYY-MM-DD-<topic>.md`.
 - Treat the document as the review surface, not the chat summary.
-- Include scope, key findings, how the system works, important files, conventions, risks, bugs if relevant, and open questions.
+- Include scope, key findings, how the system works, important files, conventions, risks, bugs
+  if relevant, and open questions.
 
 ## Handoff
 

@@ -1,6 +1,6 @@
 # decently-capable-powers
 
-A minimalist fork of [obra/superpowers](https://github.com/obra/superpowers) by Jesse Vincent —
+A minimalist fork of [obra/superpowers](https://github.com/obra/superpowers) by Jesse Vincent -
 rebuilt in July 2026 against verified, current harness and model behavior.
 
 The original Superpowers is a complete software-development methodology for coding agents. This
@@ -19,19 +19,19 @@ OpenAI Codex, and Cursor.
 - **Work with the model's grain.** Guidance that contradicts how a model was trained tends to
   degrade it. Add discipline that fills a real gap, not friction that fights the model.
 - **Evidence over vibes.** Every piece of guidance traces to a dated, sourced claim in
-  [`ASSUMPTIONS.md`](ASSUMPTIONS.md). When a claim falls, the guidance it justifies changes —
+  [`ASSUMPTIONS.md`](ASSUMPTIONS.md). When a claim falls, the guidance it justifies changes -
   the `self-update` skill re-verifies the registry as models and harnesses move.
 
 ## What's here
 
-**[`AGENTS.md`](AGENTS.md) — the always-on operating guide.** One essence per discipline, plus a
+**[`AGENTS.md`](AGENTS.md) - the always-on operating guide.** One essence per discipline, plus a
 "→ load skill X" pointer to the fuller procedure. Read natively by Codex and Cursor; reaches
-Claude Code via `CLAUDE.md`. This is the reliable layer — skills auto-trigger probabilistically,
+Claude Code via `CLAUDE.md`. This is the reliable layer - skills auto-trigger probabilistically,
 essences are always in context. Final handoffs of distinct bodies of work end with a fixed
-receipt — implementation, verification, independent review, and next step/options — so
+receipt - implementation, verification, independent review, and next step/options - so
 completion state and the available exits are visible across harnesses without scrolling.
 
-**`skills/` — ten, loaded on demand.** Each exists to counter a failure mode current models
+**`skills/` - ten, loaded on demand.** Each exists to counter a failure mode current models
 measurably still have:
 
 | Skill | Counters |
@@ -40,7 +40,7 @@ measurably still have:
 | research | planning against code the agent only knows by name |
 | test-driven-development | implementation-first work, mock-heavy tests |
 | systematic-debugging | patching symptoms; not stepping back after repeated failures |
-| verification-before-completion | unverified — or gamed — success claims |
+| verification-before-completion | unverified - or gamed - success claims |
 | receiving-code-review | sycophantic caving to feedback; patching a finding's location, not its pattern |
 | coding-standards | type/naming/abstraction drift |
 | model-selection | wrong model or reasoning effort for the task |
@@ -51,7 +51,7 @@ Personal setup never lives in published skill text: your model roster and your s
 rules go in gitignored `*.local.md` files seeded from checked-in templates at install (see
 below).
 
-**[`ASSUMPTIONS.md`](ASSUMPTIONS.md)** — the registry of empirical claims behind all of the
+**[`ASSUMPTIONS.md`](ASSUMPTIONS.md)** - the registry of empirical claims behind all of the
 above, each with what it justifies, a last-verified date, and evidence in `docs/research/`.
 
 ## Install / update
@@ -71,18 +71,18 @@ between `<DECENTLY-CAPABLE-POWERS>` tags inside a shared `<GENERATED>` wrapper (
 For a repo that wants checked-in, team-visible guidance instead: `./install.sh --project <dir>`.
 
 Running several Claude Code profiles (`CLAUDE_CONFIG_DIR=~/.claude-<name>`)? The managed guide
-section reaches **every** `~/.claude-*` profile directory automatically — its `CLAUDE.md` is
-created when absent — so rename any `.claude-*` directory that is not really a profile. Skills
+section reaches **every** `~/.claude-*` profile directory automatically - its `CLAUDE.md` is
+created when absent - so rename any `.claude-*` directory that is not really a profile. Skills
 still need the profile named: `./install.sh --config-dir ~/.claude-work --config-dir ~/.claude-personal`
 links them there too, on top of the default targets. Without it, those profiles' skill links
 are hand-made and no update ever refreshes them.
 
 Moving or renaming this checkout leaves the old links dangling, and a skill behind a dangling
-link is silently unloadable. A run reports each one and leaves it in place — a dangling target
+link is silently unloadable. A run reports each one and leaves it in place - a dangling target
 may equally be a foreign checkout on an offline volume, and its path is unrecoverable once
 overwritten. `./install.sh --repair-links` repoints them at this repo; links resolving to live
 content elsewhere are always left alone. So is any link whose target cannot be resolved to a clear
-verdict — a directory on its path denies search permission, its symlink chain loops, or the chain
+verdict - a directory on its path denies search permission, its symlink chain loops, or the chain
 runs past 64 hops. `test -e` cannot tell those apart from dangling, but the content behind them may
 be perfectly alive, so the run names the cause and leaves that link as it is; every other link in
 the same run whose target is provably gone is still repaired.
@@ -91,20 +91,20 @@ the same run whose target is provably gone is still repaired.
 disposable fixture.
 
 **One post-install step:** install.sh seeds `skills/model-selection/roster.local.md` from its
-template — edit it with your harnesses/subscriptions, model sweet spots, and standing
+template - edit it with your harnesses/subscriptions, model sweet spots, and standing
 assignments. It is gitignored (personal, never published) and reaches every harness through
 the skill symlinks.
 
 Coding standards are per-stack: published bases in `skills/coding-standards/stacks/`
 (typescript.md, kotlin.md, …) load automatically for matching projects and update with
 `git pull`. For personal additions or overrides, create a gitignored
-`stacks/<stack>.local.md` next to the base — it wins on conflict and survives pulls.
+`stacks/<stack>.local.md` next to the base - it wins on conflict and survives pulls.
 
 ## Keeping it current
 
 Run the `self-update` skill quarterly or after major model/harness releases. It re-runs the
 research that produced `docs/research/` (prompt templates ship inside the skill), diffs the
-findings against `ASSUMPTIONS.md`, and proposes the guidance changes that follow — with the same
+findings against `ASSUMPTIONS.md`, and proposes the guidance changes that follow - with the same
 keep/drop bar the fork was built on.
 
 ## Status
@@ -121,5 +121,5 @@ Superpowers was originally built by [Jesse Vincent](https://blog.fsck.com) and t
 has helped you do things that make money, consider
 [sponsoring the original author's open-source work](https://github.com/sponsors/obra).
 
-MIT License — see [LICENSE](LICENSE). Copyright © 2025 Jesse Vincent; portions © 2025–2026
+MIT License - see [LICENSE](LICENSE). Copyright © 2025 Jesse Vincent; portions © 2025-2026
 Thiemo Belmega.

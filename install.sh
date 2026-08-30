@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install.sh — deploy decently-capable-powers into user-level agent config.
+# install.sh - deploy decently-capable-powers into user-level agent config.
 #
 # Default (no args): user-level install covering all four harnesses.
 #   - Symlinks each skills/<name>/ into ~/.claude/skills/ (read by Claude Code
@@ -14,30 +14,30 @@
 #     created if absent.
 #   - Grok Build needs no targets of its own: it reads ~/.agents/skills/
 #     natively and loads ~/.claude/CLAUDE.md via its Claude compat, which is on
-#     by default — a ~/.grok/AGENTS.md copy would double-load the guide
+#     by default - a ~/.grok/AGENTS.md copy would double-load the guide
 #     (ASSUMPTIONS.md A20).
 #   - Prints the one manual step for Cursor (no file-based global instructions;
 #     paste into Settings → Rules).
 #
-# --repair-links: repoint skill links that dangle — the shape drift takes when this
+# --repair-links: repoint skill links that dangle - the shape drift takes when this
 #   repo is moved or renamed. Off by default: a dangling target could equally be a
 #   foreign checkout on an offline volume, and its path is unrecoverable once
 #   overwritten. A default run reports each dangling link and names this flag.
 #
 # --config-dir <dir> (repeatable): also symlink the skills into <dir>/skills.
-#   Use it for each extra Claude profile / CLAUDE_CONFIG_DIR you run — e.g. a
+#   Use it for each extra Claude profile / CLAUDE_CONFIG_DIR you run - e.g. a
 #   machine with several profiles wires them all in one invocation:
 #     ./install.sh --config-dir ~/.claude-work --config-dir ~/.claude-personal
 #   The default ~/.claude and ~/.agents targets are always linked as well. The
-#   operating-guide section needs no such flag — every ~/.claude-* profile is
-#   targeted automatically — but skills carry no such convention, so without
+#   operating-guide section needs no such flag - every ~/.claude-* profile is
+#   targeted automatically - but skills carry no such convention, so without
 #   this flag their links are hand-made and never refreshed.
 #
 # --project <dir>: refresh the managed block in <dir>/AGENTS.md and ensure
-#   <dir>/CLAUDE.md imports it — for repos that want checked-in, team-visible
+#   <dir>/CLAUDE.md imports it - for repos that want checked-in, team-visible
 #   guidance instead of (or on top of) the user-level install.
 #
-# Idempotent — re-run after every change to this repo. Update = git pull + re-run.
+# Idempotent - re-run after every change to this repo. Update = git pull + re-run.
 # Load paths verified against official harness docs 2026-07-02, Grok Build
 # 2026-07-19 (ASSUMPTIONS.md A2/A3/A20); the self-update skill re-verifies them.
 
@@ -48,15 +48,15 @@ GUIDE="$REPO_DIR/AGENTS.md"
 # Tag grammar shared with decently-coordinated-loops (agreed 2026-08-23): one outer
 # <GENERATED> wrapper per config file holds one inner section per tool. A tag counts
 # only when it is the entire trimmed line, and only as part of a nearest open/close
-# pair — a prose mention of a tag elsewhere in the file is inert. Malformed or
+# pair - a prose mention of a tag elsewhere in the file is inert. Malformed or
 # ambiguous tags fail closed: the file is reported and left untouched.
 GEN_OPEN='<GENERATED>'
 GEN_CLOSE='</GENERATED>'
 SEC_OPEN='<DECENTLY-CAPABLE-POWERS>'
 SEC_CLOSE='</DECENTLY-CAPABLE-POWERS>'
 # Legacy markers, recognised for migration only: configs written before the tag
-# grammar carry them. Matched as exact trimmed lines — the byte-for-byte forms the
-# old installer wrote (verified as the only forms in the wild, 2026-08-23) — so a
+# grammar carry them. Matched as exact trimmed lines - the byte-for-byte forms the
+# old installer wrote (verified as the only forms in the wild, 2026-08-23) - so a
 # prose comment that merely starts like a marker is never treated as one.
 LEGACY_START_LINE='<!-- DCP:START — managed block; edit in the decently-capable-powers repo, then re-run install.sh -->'
 LEGACY_END_LINE='<!-- DCP:END -->'
@@ -64,7 +64,7 @@ LEGACY_END_LINE='<!-- DCP:END -->'
 # would follow is still classified on its merits rather than cut short as indeterminate.
 LINK_HOP_LIMIT=64
 
-# Canonical path of an existing directory, without readlink -f — BSD readlink (macOS)
+# Canonical path of an existing directory, without readlink -f - BSD readlink (macOS)
 # has no such option. `cd -P` + `pwd -P` is POSIX and resolves symlinked parents the
 # same way; an unresolvable path (a dangling target) falls back to the literal string,
 # which then simply fails the equality test below.
@@ -75,7 +75,7 @@ canonical_dir() {
 
 # A symlink's identity, independent of how the path was spelled: its parent canonicalised,
 # plus its own name. `./loop-a`, `alias/../loop-a` and `/abs/loop-a` are one link, and cycle
-# detection has to see them as one — comparing the raw strings would let an aliased loop
+# detection has to see them as one - comparing the raw strings would let an aliased loop
 # spin until the hop limit and be misreported as an over-long chain.
 link_identity() {
   local link="$1"
@@ -98,7 +98,7 @@ link_destination() {
 # second case would discard a link to live content. So walk the path top-down: while every
 # ancestor so far is a searchable directory, a missing component is genuinely missing; the
 # moment one cannot be looked inside, the verdict is unknown rather than absent. A regular
-# file mid-path (ENOTDIR) is definitive too — nothing can exist below it.
+# file mid-path (ENOTDIR) is definitive too - nothing can exist below it.
 target_state() {
   local target="$1" hops="${2:-0}" visited="${3:-}" cur rest component
   if [ -e "$target" ]; then printf 'present\n'; return; fi
@@ -155,7 +155,7 @@ link_skills() {
       # Not provably dangling, so replacing it could discard the only record of a live
       # target: this stays untouched even under --repair-links. Each cause needs its own
       # recovery step, so name the one that actually applies.
-      echo "  ! $link (-> $(link_destination "$link")) cannot be resolved — left untouched"
+      echo "  ! $link (-> $(link_destination "$link")) cannot be resolved - left untouched"
       case "$state" in
         unknown:permission)
           echo "    a directory on that path denies search permission; its target may still be live" ;;
@@ -165,7 +165,7 @@ link_skills() {
           echo "    its symlink chain exceeds $LINK_HOP_LIMIT hops; repoint or remove it by hand" ;;
       esac
     elif [ "$state" = absent ] && [ "$repair_dangling" = true ]; then
-      # Read the old destination before ln -sfn replaces it — afterwards it is gone,
+      # Read the old destination before ln -sfn replaces it - afterwards it is gone,
       # and this line is the only record of where the link used to point.
       previous="$(link_destination "$link")"
       ln -sfn "${skill_dir%/}" "$link"
@@ -178,7 +178,7 @@ link_skills() {
       echo "  ! $link is dangling (-> $(link_destination "$link")) and its skill is unloadable"
       echo "    rerun with --repair-links to point it at this repo"
     elif [ -e "$link" ] || [ -L "$link" ]; then
-      echo "  ! $link exists and is not a link to this repo — left untouched"
+      echo "  ! $link exists and is not a link to this repo - left untouched"
     else
       ln -s "${skill_dir%/}" "$link"
       linked=$((linked + 1))
@@ -197,15 +197,15 @@ seed_local_files() {
     local local_file="${tpl%.template.md}.local.md"
     if [ ! -e "$local_file" ]; then
       cp "$tpl" "$local_file"
-      echo "  seeded ${local_file#"$REPO_DIR"/} — edit it with your own setup"
+      echo "  seeded ${local_file#"$REPO_DIR"/} - edit it with your own setup"
       seeded=$((seeded + 1))
     fi
   done
   if [ "$seeded" -eq 0 ]; then echo "  all local files already present"; fi
 }
 
-# The guide section — the <DECENTLY-CAPABLE-POWERS>..</DECENTLY-CAPABLE-POWERS>
-# region of this repo's AGENTS.md, tags included — written to $1. Aborts the install
+# The guide section - the <DECENTLY-CAPABLE-POWERS>..</DECENTLY-CAPABLE-POWERS>
+# region of this repo's AGENTS.md, tags included - written to $1. Aborts the install
 # when the source is malformed (a missing, duplicated, orphaned, or misordered tag):
 # every target would inherit the defect.
 extract_section() {
@@ -220,14 +220,14 @@ extract_section() {
       for (i = start; i <= end; i++) print line[i]
     }
   ' "$GUIDE" > "$out" || {
-    echo "$GUIDE has no well-formed $SEC_OPEN section — nothing was installed" >&2
+    echo "$GUIDE has no well-formed $SEC_OPEN section - nothing was installed" >&2
     exit 1
   }
 }
 
 # Follow a symlink chain to its final path. A config symlink is a deliberate sharing
 # arrangement: the referent must be edited in place, never the link replaced. Fails
-# (empty output) past the hop limit — a loop.
+# (empty output) past the hop limit - a loop.
 resolve_target() {
   local t="$1" hops=0
   while [ -L "$t" ]; do
@@ -244,14 +244,14 @@ resolve_target() {
 # everything outside the tags are preserved byte for byte, line endings and a
 # missing final newline included; the one deliberate write outside the tags is the
 # separator added when appending to a file that never carried the guide. Malformed
-# or ambiguous tags — an orphan tag at either level, a section outside the wrapper,
-# duplicated markers — skip the file with a report; the run continues for the other
+# or ambiguous tags - an orphan tag at either level, a section outside the wrapper,
+# duplicated markers - skip the file with a report; the run continues for the other
 # targets. A symlinked target has its referent edited in place. Reads $GUIDE_BLOCK,
 # the section extracted and validated before any target was touched.
 #
 # Accepted limitation (owner ruling 2026-08-23): this read-modify-write is not
 # serialized against the DCL seeder, so two installers run concurrently on the same
-# file can drop each other's freshly written section — last writer wins. The window
+# file can drop each other's freshly written section - last writer wins. The window
 # is sub-second, both runs are hand-started by the same user, the fail-closed parser
 # keeps the surviving file well-formed, and re-running the losing installer restores
 # its section. A locking protocol was tried and reverted: its own failure modes
@@ -259,7 +259,7 @@ resolve_target() {
 refresh_block() {
   local target="$1" resolved
   if ! resolved="$(resolve_target "$target")"; then
-    echo "  ! $target: symlink chain exceeds $LINK_HOP_LIMIT hops — left untouched"
+    echo "  ! $target: symlink chain exceeds $LINK_HOP_LIMIT hops - left untouched"
     return 0
   fi
   mkdir -p "$(dirname "$resolved")"
@@ -290,7 +290,7 @@ refresh_block() {
     { line[NR] = $0; n = NR }
     END {
       # Wrapper pairs: nearest open/close, exact trimmed lines only. Any orphan tag
-      # is far more likely wreckage of a damaged block than prose — fail closed.
+      # is far more likely wreckage of a damaged block than prose - fail closed.
       gopen = 0; gpairs = 0
       for (i = 1; i <= n; i++) {
         t = trim(line[i])
@@ -362,10 +362,10 @@ refresh_block() {
     }
   ' "$resolved" > "$tmp" 2> "$tmp.status" || status=$?
   if [ "$status" -eq 3 ]; then
-    echo "  ! $target: $(sed 's/^SKIP //' "$tmp.status") — left untouched; fix the tags and re-run"
+    echo "  ! $target: $(sed 's/^SKIP //' "$tmp.status") - left untouched; fix the tags and re-run"
     rm -f "$tmp"
   elif [ "$status" -ne 0 ]; then
-    echo "  ! $target: refresh failed (awk exit $status) — left untouched" >&2
+    echo "  ! $target: refresh failed (awk exit $status) - left untouched" >&2
     rm -f "$tmp"
   else
     mv "$tmp" "$resolved"
@@ -378,8 +378,8 @@ refresh_block() {
   rm -f "$tmp.status"
 }
 
-# The guide section is extracted and validated ONCE, before any target — skill link,
-# seeded file, or config — is touched, so a malformed source aborts with nothing
+# The guide section is extracted and validated ONCE, before any target - skill link,
+# seeded file, or config - is touched, so a malformed source aborts with nothing
 # modified. The temp file is cleaned on every exit.
 materialize_guide() {
   GUIDE_BLOCK="$(mktemp)"
@@ -417,7 +417,7 @@ while [ "$#" -gt 0 ]; do
     --config-dir)
       # A missing value, an empty one (an unset profile variable), or a following
       # option token all mean no directory was given. Accepting any of them sends
-      # link_skills at /skills or a relative "-flag/skills" — and only *after* the
+      # link_skills at /skills or a relative "-flag/skills" - and only *after* the
       # default targets were written. Reject here, before anything is touched, so a
       # bad invocation is all-or-nothing.
       case "${2:-}" in
@@ -452,13 +452,13 @@ elif [ "${1:-}" != "" ]; then
   exit 1
 fi
 
-# The guide source is validated before anything at all is created — even the write
+# The guide source is validated before anything at all is created - even the write
 # probes below make directories, and a malformed source must abort with the machine
 # untouched.
 materialize_guide
 
 # A supplied profile path must be proven usable *before* anything is linked.
-# link_skills would otherwise fail at mkdir -p on a file or a dangling link — after
+# link_skills would otherwise fail at mkdir -p on a file or a dangling link - after
 # the default targets had already been rewritten, leaving a partial install.
 for extra_dir in ${extra_config_dirs[@]+"${extra_config_dirs[@]}"}; do
   if { [ -e "$extra_dir" ] || [ -L "$extra_dir" ]; } && [ ! -d "$extra_dir" ]; then
@@ -471,7 +471,7 @@ for extra_dir in ${extra_config_dirs[@]+"${extra_config_dirs[@]}"}; do
   fi
 done
 
-# Every skill target — default and supplied alike — must be proven creatable *and*
+# Every skill target - default and supplied alike - must be proven creatable *and*
 # writable before the first link, so no failure can leave some targets installed and
 # others not. Inspecting a path is not enough: `mkdir -p` succeeds on a path that
 # already exists read-only, and a path under a regular file fails only on the
@@ -485,12 +485,12 @@ done
 # default before a bad profile path would leave that default behind on the failure.
 for skill_target in ${extra_targets[@]+"${extra_targets[@]}"} "${default_targets[@]}"; do
   if ! mkdir -p "$skill_target" 2>/dev/null; then
-    echo "$skill_target cannot be created — nothing was installed" >&2
+    echo "$skill_target cannot be created - nothing was installed" >&2
     exit 1
   fi
   probe="$skill_target/.dcp-write-probe.$$"
   if ! ln -s /dev/null "$probe" 2>/dev/null; then
-    echo "$skill_target is not writable — nothing was installed" >&2
+    echo "$skill_target is not writable - nothing was installed" >&2
     exit 1
   fi
   rm -f "$probe"
@@ -518,7 +518,7 @@ refresh_block "$HOME/.codex/AGENTS.md"
 
 cat <<'EOF'
 
-Cursor has no file-based global instructions — one manual step:
+Cursor has no file-based global instructions - one manual step:
   paste the contents of this repo's AGENTS.md into
   Cursor → Settings → Rules → User Rules, and re-paste whenever the guide
   changes. (Skills reach Cursor automatically via the symlinks above.)

@@ -10,7 +10,7 @@ notice and judge, rather than by conversation chronology, implementation sequenc
 severity ranking.
 
 ```md
-Status: Draft — not for implementation
+Status: Draft - not for implementation
 
 # <Topic>
 

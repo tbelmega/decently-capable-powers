@@ -12,7 +12,7 @@ For non-trivial work the user hasn't already fully specified, turn the idea into
 before implementing. → When starting feature/creative work, load `brainstorming`.
 
 ## Scope
-Build what was asked - the smallest change that fulfills the request. No unrequested features,
+Build what was asked: the smallest change that fulfills the request. No unrequested features,
 refactors, files, or "while I'm here" improvements; propose extras, don't build them.
 
 ## Owner attention
@@ -31,7 +31,7 @@ else's text, substitute the hyphen and leave their wording alone.
 
 ## Understanding unfamiliar code
 Before planning against a codebase, system, or feature you don't already understand, map how it
-actually works first - don't guess from names. → To map or document current behavior, load
+actually works first; don't guess from names. → To map or document current behavior, load
 `research`.
 
 ## Testing - decide once per work-stream, not per task
@@ -45,7 +45,7 @@ implementing, and skip infra/config/throwaway unless asked. → When TDD is on, 
 ## Test integrity
 Never get to green by weakening the red: don't delete, skip, or loosen a failing test, and don't
 swallow the error it exposes. If the test itself is wrong, fix it as its own explicit step with
-the reason stated - never silently in the change that makes it pass.
+the reason stated, never silently in the change that makes it pass.
 
 ## Debugging
 Find the root cause before proposing a fix; don't patch symptoms. If 3+ fixes fail, suspect the
@@ -53,8 +53,8 @@ architecture and step back. → On any bug/test failure/unexpected behavior, loa
 `systematic-debugging`.
 
 ## Verify before completion
-Never claim done/fixed/passing without running the check and showing the evidence - and the
-check must be the original, unweakened one. Ban "should", "seems", "probably". → For the full
+Never claim done/fixed/passing without running the check and showing the evidence. The check
+must be the original, unweakened one. Ban "should", "seems", "probably". → For the full
 checklist, load `verification-before-completion`.
 
 ## Commits
@@ -97,7 +97,7 @@ Work where you were started. **Never switch, create, or delete a git worktree, a
 out a different branch, unless the user told you to in this session.** Assume the working
 directory you were launched in was chosen deliberately; a worktree you were not pointed at is
 someone else's workspace, possibly with a session live in it right now. If you believe a
-different worktree is genuinely needed, say so and wait for an answer - do not act and report
+different worktree is genuinely needed, say so and wait for an answer; do not act and report
 afterwards.
 
 This holds even when git would succeed and even when it looks tidy: switching a worktree moves
@@ -108,7 +108,7 @@ clean tree. Stashed work disappears from the user's editor and file manager with
 would think to look for; they can lose access to their own in-progress work while you carry on.
 If a command needs a clean tree, name the files that are in the way and ask.
 
-Treat another session's uncommitted, untracked, or staged files as strictly read-only - do not
+Treat another session's uncommitted, untracked, or staged files as strictly read-only: do not
 commit, move, revert, format, or clean them, and do not fold them into your own commits.
 
 The one decision that *is* yours to raise: as with testing, ask once per work-stream whether to
@@ -128,8 +128,8 @@ the review without waiting for the user to remind you.
 If the requested handoff state prevents review, preserve that state and report review as `NOT RUN`.
 
 ## Completion receipt
-**End** the final handoff of a distinct body of work with these four lines - they are the last
-thing you print, after the prose. In a terminal the final lines are what the user sees without
+**End** the final handoff of a distinct body of work with the four statuses below; they are
+the last thing you print, after the prose. In a terminal the final lines are what the user sees without
 scrolling, so status lands at a glance; this is the one place the "asks first, evidence behind"
 ordering is deliberately inverted. Keep the explanatory summary of what changed above it.
 Add concise command, HEAD, URL, or review-artifact evidence after each status:
@@ -147,8 +147,8 @@ requires the user's explicit opt-out. Never claim the overall work complete when
 required review has not passed.
 
 `NEXT STEP/OPTIONS` is mandatory. When the work is cleanly finished, one line naming the single
-next action is enough. When anything is unresolved - review blocked or capped, verification
-failed, implementation incomplete - enumerate the **real alternatives with their consequences**,
+next action is enough. When anything is unresolved (review blocked or capped, verification
+failed, implementation incomplete), enumerate the **real alternatives with their consequences**,
 including the option of doing nothing. Never present "authorize more of what I was doing" as the
 only way forward; the user must be able to choose an exit without inferring it.
 
@@ -158,15 +158,15 @@ received: the user may close the conversation at that exact point, and nothing s
 stale or overstated when they do.
 
 ## Context hygiene
-Externalize durable state - plans, decisions, research, progress - to files as you go; long
+Externalize durable state (plans, decisions, research, progress) to files as you go; long
 sessions degrade and compaction can silently drop in-context constraints. When a session should
 end or the work should move to another harness/model, write a handoff instead of pushing on.
 → To hand off cleanly, load `agent-handover`.
 
 ## Delegating to subagents
-Delegate work that's compressible (large search, small result - codebase/web research, a test-fix
+Delegate work that's compressible (large search, small result: codebase/web research, a test-fix
 loop) or that would pollute the main context. Keep work that leans on the orchestrator's
-accumulated big-picture context in the orchestrator - don't make a subagent rebuild it.
+accumulated big-picture context in the orchestrator; don't make a subagent rebuild it.
 Delegate for token efficiency, never for wall-clock speed: each dispatch rebuilds context from
 cold, so prefer sequential execution and fewer delegations when parallelizing wouldn't save
 tokens.
@@ -174,8 +174,8 @@ tokens.
 ## Receiving code review
 Evaluate feedback technically: restate it, verify against the actual code, implement what's right,
 push back on what's wrong. No performative agreement. Fix the pattern, not the location: name a
-finding's root cause and sweep the whole review range - plus whatever the changed code was copied
-from - for siblings and for stale restatements of any fact you corrected, before calling it fixed.
+finding's root cause and sweep the whole review range (plus whatever the changed code was copied
+from) for siblings and for stale restatements of any fact you corrected, before calling it fixed.
 When an active review orchestrator provides durable finding disposition and follow-up, follow its
 scope decision. Otherwise, fix confirmed sibling occurrences in the same change.
 → For nuanced cases, load `receiving-code-review`.
@@ -188,9 +188,9 @@ prompt, review finding); the comment outlives the reference, so state the constr
 → When writing or reviewing code, load `coding-standards`.
 
 ## Choosing model and effort
-Match the model and reasoning effort to the task; prefer high effort over max - max measurably
+Match the model and reasoning effort to the task; prefer high effort over max; max measurably
 overthinks. If the work clearly fits a different model or harness in the user's roster better,
 say so before proceeding rather than grinding through. → Before assigning model or effort to any
-work item - including a subagent dispatch - load `model-selection`.
+work item, including a subagent dispatch, load `model-selection`.
 
 </DECENTLY-CAPABLE-POWERS>

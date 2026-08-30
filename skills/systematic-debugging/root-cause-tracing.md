@@ -82,7 +82,7 @@ async function gitInit(directory: string) {
 }
 ```
 
-**Critical:** Use `console.error()` in tests (not logger - may not show)
+**Critical:** Use `console.error()` in tests (not logger, which may not show)
 
 **Run and capture:**
 ```bash
@@ -155,15 +155,7 @@ digraph principle {
 
 ## Stack Trace Tips
 
-**In tests:** Use `console.error()` not logger - logger may be suppressed
+**In tests:** Use `console.error()` not logger, which may be suppressed
 **Before operation:** Log before the dangerous operation, not after it fails
 **Include context:** Directory, cwd, environment variables, timestamps
 **Capture stack:** `new Error().stack` shows complete call chain
-
-## Real-World Impact
-
-From debugging session (2025-10-03):
-- Found root cause through 5-level trace
-- Fixed at source (getter validation)
-- Added 4 layers of defense
-- 1847 tests passed, zero pollution

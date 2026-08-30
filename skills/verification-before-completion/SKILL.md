@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: Use when about to claim work is complete, fixed, or passing — run the verification and read the output before making any claim
+description: Use when about to claim work is complete, fixed, or passing; run the verification and read the output before making any claim
 ---
 
 # Verification Before Completion
@@ -21,7 +21,7 @@ If you haven't run the verification command in this turn, you cannot claim it pa
 Before claiming any status:
 
 1. **Identify** the command that proves the claim
-2. **Run** it — fresh and complete
+2. **Run** it, fresh and complete
 3. **Read** the full output; check the exit code; count the failures
 4. **Only then** state the claim, together with the evidence
 
@@ -41,12 +41,12 @@ Before claiming any status:
 Running the command is not enough if the evidence was shaped to pass. Before claiming success,
 confirm the check still checks the original thing:
 
-- No test was deleted, skipped, or weakened to get to green — a failing test is information,
+- No test was deleted, skipped, or weakened to get to green - a failing test is information,
   not an obstacle.
 - No assertion was loosened (`toBe` → `toBeTruthy`, exact → substring) to accommodate the code.
 - Error handling wasn't added to swallow the failure the test was catching.
 
-If the check had to change, say so explicitly and justify it — that's a spec change, not a fix.
+If the check had to change, say so explicitly and justify it; that's a spec change, not a fix.
 
 ## Red Flags
 
@@ -57,7 +57,7 @@ turn it started passing · tired and wanting the work over.
 
 ## Completion Receipt
 
-When about to claim work is complete, **close** with the always-on four-line receipt — it is the
+When about to claim work is complete, **close** with the always-on four-line receipt; it is the
 last thing you print, below the prose, so the status is visible without scrolling.
 
 ```text
@@ -75,11 +75,7 @@ out. `NOT RUN` and `BLOCKED` are honest handoff states, never synonyms for compl
 is required.
 
 `NEXT STEP/OPTIONS` states the single next action when the work is cleanly done, and enumerates
-the real alternatives with their consequences when it is not — including doing nothing. Asking
+the real alternatives with their consequences when it is not, including doing nothing. Asking
 for more of what you were already doing is never the only listed option. Before printing the
 receipt, leave any tracked item accurate as of that moment, so the user can close the
 conversation there without leaving a tracker stale.
-
-## Bottom Line
-
-Run the command. Read the output. Then claim the result — with the evidence and receipt.
