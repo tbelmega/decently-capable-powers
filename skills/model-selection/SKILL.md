@@ -31,17 +31,17 @@ agent-handover; cross-model review happens on the PR, no bridge needed.
 
 - Default medium/high. Raise only for genuinely hard reasoning: architecture, gnarly debugging,
   wide-blast-radius refactors.
-- **Max backfires** - overthinking and context exhaustion; Opus 4.8 measurably does better at
-  high than max. Reserve xhigh/max for the hardest asynchronous single-shot tasks, if at all.
+- **Effort is model-specific.** For Opus 5, high is the default and medium fits bounded work;
+  xhigh and max are legitimate for unusually deep tasks when their token, latency, and context
+  costs are justified. Follow the roster for other models.
 - Don't pay high effort for mechanical work: renames, boilerplate, formatting, config.
 
 ## Patterns
 
-- **Plan high, implement cheap:** plan/design with the strongest reasoner (Opus high), implement
-  from the spec with the cheaper fit (Sonnet, or subagents per Subagent Routing below). Dominant
-  practitioner pattern, and it matches the spec-carried-guidance workflow (brainstorming skill).
-  The cheap leg applies to the delegated leaves; an implementation's orchestrator can't
-  delegate up, so give it the cheapest tier that still covers the hardest item it keeps.
+- **Plan strong, implement to fit:** use Opus 5 high for planning and complex implementation.
+  Use Sonnet for bounded, checkable execution and Fable only for the frontier tail. This matches
+  the spec-carried-guidance workflow (brainstorming skill). An implementation's orchestrator
+  cannot delegate up, so give it the cheapest tier that still covers the hardest item it keeps.
 - **Cross-model review:** have a different model review than the one that wrote the code -
   models are blind to their own systematic errors. If the roster names a standing reviewer,
   use it. (Judgment call, not research-verified.)
@@ -59,8 +59,10 @@ one trap:
   Opus on the Claude API, Plan and general-purpose inherit uncapped; see ASSUMPTIONS.md A15). From
   an Opus session, an un-overridden Explore sweep runs on Opus.
 - **Override per dispatch:** pass an explicit `model` (and effort where supported) matched to
-  the work: haiku for reference sweeps and throwaway edits, sonnet for well-specified
-  mechanical implementation. Inherit only when the subagent genuinely needs the session's tier.
+  the work: haiku for reference sweeps and throwaway edits, sonnet for well-specified bounded
+  implementation, opus for judgment and difficult work, and fable only for frontier-tail work
+  where an Opus failure would be materially expensive. Inherit only when the subagent genuinely
+  needs the session's tier.
 - **The watch-out column follows the model into the dispatch:** review a Sonnet subagent's diff
   for over-engineering exactly as you would a Sonnet session's.
 - **Delegate for token efficiency, never wall-clock speed** (default - A16; override in
