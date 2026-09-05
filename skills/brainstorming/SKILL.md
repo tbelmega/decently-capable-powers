@@ -82,7 +82,9 @@ reviewed in a single pass. The spec file itself is never skipped.
      the user is assumed to have absorbed.
 7. **Present the design** in one pass. Walk through it section-by-section, confirming as you
    go, only when it is too large to review in one sitting.
-8. **Finalize and gate.** Before asking for approval, ask every remaining material question
+8. **Finalize and gate.** Start finalization when the user requests it, once the design's
+   direction is settled; do not run an independent review loop during exploratory drafting.
+   Before asking for approval, ask every remaining material question
    directly, with a recommendation, and update the draft from the user's answer. Make
    low-impact, reversible decisions yourself when appropriate; label them as agent decisions in
    the spec so the user can object during review. Self-review for placeholders, contradictions,
@@ -98,8 +100,16 @@ reviewed in a single pass. The spec file itself is never skipped.
    the Review summary (below) from the finished body. Then, and only at this finalization
    stage, use [review-layout.md](review-layout.md) to reorder the whole spec for review. It is
    a checklist, not a form: retain only relevant sections and never invent content to fill a
-   heading. Append the implementation-guidance tail (below). Ask the user to review; iterate.
-   Only after approval, drop the Draft status and commit the spec.
+   heading. Append the implementation-guidance tail (below). Where loops-review is available
+   and a reviewer is configured, use its draft-finalization procedure: one independent round
+   plus relevant fixes. Otherwise follow any configured project design-review procedure;
+   report when no independent review is available. Findings authorize corrections within
+   agreed intent, not changes to scope, user-visible behavior, cost, or settled tradeoffs;
+   surface those as questions, including when the distinction is uncertain. Additional
+   rounds need user authorization and a concrete unresolved issue. Present the still-Draft
+   spec with substantive changes, open decisions/risks, and edits lacking re-review.
+   Ask the user to review and explicitly approve. Finalization and agent review are not
+   approval: only after user approval, drop the Draft status and commit the spec.
 9. **Transition to implementation.** For multi-task work, use the harness's native planning
    (plan mode / task list) with the spec as the source of truth, and turn the tail's Routing
    line into a concrete dispatch plan before writing code: what the orchestrator executes, what
