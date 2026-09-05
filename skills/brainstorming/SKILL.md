@@ -77,8 +77,9 @@ reviewed in a single pass. The spec file itself is never skipped.
    - Before finalizing: name the ~3 most impactful things the spec is still not considering, and
      triage them with the user.
    - Before presenting: enumerate every design element not strictly entailed by the user's
-     request and confirm each as build / defer / cut; additions live in the spec as labeled
-     decisions, not prose the user is assumed to have absorbed.
+     request and confirm each as current scope, deferred scope, out of scope, or a prohibited
+     outcome (definitions below); additions live in the spec as labeled decisions, not prose
+     the user is assumed to have absorbed.
 7. **Present the design** in one pass. Walk through it section-by-section, confirming as you
    go, only when it is too large to review in one sitting.
 8. **Finalize and gate.** Before asking for approval, ask every remaining material question
@@ -89,10 +90,11 @@ reviewed in a single pass. The spec file itself is never skipped.
    conventions (from its docs and code patterns). If the spec has grown past one implementation
    cycle, propose splitting it: for a new capability, an MVP spec for immediate implementation
    plus follow-up specs for the rest; for an iteration, defer only separable work or work whose
-   cost or risk warrants a new approval. Follow-ups become named extensions the MVP structure
-   must accommodate. Add a Mermaid diagram only where a picture genuinely clarifies. Reconcile
-   the `Deferred aspects` ledger: every deferred capability, question, polish item, or
-   follow-up must be recorded there with its reason, return condition, and intended fit. Write
+   cost or risk warrants a new approval. Record follow-ups as deferred scope; they may guide
+   necessary design choices only within the no-extra-effort boundary below. Add a Mermaid diagram
+   only where a picture clarifies. Reconcile the `Deferred scope` ledger: every deferred
+   capability, question, polish item, or follow-up must be recorded there with its reason,
+   reconsideration condition, and intended fit if known. Write
    the Review summary (below) from the finished body. Then, and only at this finalization
    stage, use [review-layout.md](review-layout.md) to reorder the whole spec for review. It is
    a checklist, not a form: retain only relevant sections and never invent content to fill a
@@ -102,7 +104,7 @@ reviewed in a single pass. The spec file itself is never skipped.
    (plan mode / task list) with the spec as the source of truth, and turn the tail's Routing
    line into a concrete dispatch plan before writing code: what the orchestrator executes, what
    gets delegated at which model/effort, in what order. Before implementation, call out the
-   `Deferred aspects` ledger again in the implementation guidance and follow any project-defined
+   `Deferred scope` ledger again in the implementation guidance and follow any project-defined
    tracking instructions for its entries. For small work, implement directly.
 
 **Revising an approved spec** is a new approval, not an edit: present the delta (what changed,
@@ -137,33 +139,55 @@ Purpose and acceptance criteria (verifiable checks the implementing agent can te
 Architecture and placement: which existing modules are touched, new vs. modified files, the seams
 created, which existing patterns to follow. Data flow, error handling, testing. Risks and
 questions the user explicitly decided to defer (or, after the first mention, deferred questions)
-belong in the `Deferred aspects` ledger below. Do not park unresolved material decisions there:
-ask those before approval. Non-goals
-and rejected alternatives, each with its why. Features struck during
-dialogue land here with the reason, so implementing agents don't reintroduce them and future
-brainstorms don't relitigate. Sections scale with the work: a small feature may cover several of
-these in a paragraph.
+belong in the `Deferred scope` ledger below. Do not park unresolved material decisions there:
+ask those before approval. Use the scope categories below instead of a
+"Non-goals" heading or label. Record rejected alternatives and their rationale separately;
+rejecting an approach does not automatically prohibit its outcome. Classify features removed
+during dialogue by the actual decision, so implementing agents do not reintroduce them or infer
+an unstated future commitment. Sections scale with the work: a small feature may cover several
+of these in a paragraph.
+
+## Scope categories
+
+- **Deferred scope:** a possible future capability we are consciously keeping in mind. When
+  implementation already requires a choice, use it to favor an equally simple option that
+  leaves the relevant extension open. Spend no extra design or implementation effort on that
+  direction: no preparatory abstractions, hooks, scaffolding, or partial implementation. If
+  accommodating it would add effort or complexity, implement current scope without that
+  accommodation. Record any already-known consequence in the ledger, without investigating it.
+- **Out of scope:** outside this work's reasoning and implementation. Do not explore it, plan
+  for it, or shape extensibility around it. This says nothing about whether it will be desirable
+  later; it is neither a future commitment nor a prohibition. Name the boundary without
+  analyzing or justifying the topic. Reopening it requires a new scope decision.
+- **Prohibited outcomes:** behavior or results the design must actively prevent. State what
+  must not happen and why, and include verifiable acceptance criteria for preventing it.
+
+None of these categories authorizes an extra feature "because it is free". Only current scope
+is authorized for implementation; changing a boundary requires explicit approval. Omit empty
+categories rather than inventing entries. When revising an existing spec, replace any ambiguous
+"Non-goals" entries with the appropriate category from its recorded decisions; ask if the intent
+cannot be inferred.
 
 ## Extensibility judgment
 
 - For a new capability, the default is the simplest end-to-end design that meets the spec. For
   an iteration, the default is the established scope and prior commitments.
-- For a new capability, extensions the project already names (roadmap docs, stated plans, the
-  user's own expansion ideas) are design constraints, not current scope: keep them out of the
-  first build, but shape the structure so they slot in cleanly later. For an iteration, prior
-  approved commitments define the current scope; only additional roadmap work is deferred.
-  Record deferred extensions with where they will plug in.
-- For speculative extensibility, use judgment: identify the likely axes of change and keep them
-  cheap: don't build them, but don't design them out. Ask the user only when the choice is
-  expensive to reverse.
+- For a new capability, named roadmap extensions may inform deferred scope, not current
+  implementation. Apply the no-extra-effort rule above; naming a future extension does not
+  require shaping today's structure around it. For an iteration, prior approved commitments
+  remain current scope; only additional roadmap work is deferred.
+- Do not spend effort designing for speculative extensions. Topics explicitly out of scope do
+  not enter extensibility reasoning. Resolve choices against current requirements and recorded
+  deferred scope; ask when an unresolved choice materially affects current scope.
 
-## Deferred aspects
+## Deferred scope
 
 When anything is deferred, end the spec with this ledger immediately before Implementation
 guidance. It is the canonical durable record; summarize it in the review-facing scope boundary,
 but do not maintain a competing list there. For each entry, state what is deferred, why, the
-condition that brings it back into scope, and where it fits. On every revision, reconcile the
-ledger before approval. If project instructions define a tracking system, also record or update
+condition for reconsidering it, and its intended fit if already known. Do not design an
+extension point just to fill the ledger; "not designed" is a valid intended-fit entry. On every
+revision, reconcile the ledger before approval. If project instructions define a tracking system, also record or update
 the follow-up there; this skill does not assume one. Omit this section when nothing is deferred.
 
 ## Implementation Guidance (spec tail)
@@ -178,8 +202,9 @@ handoff, or in a different harness) still carries the agreed working decisions a
 - Verify: run <project's typecheck+test commands> before claiming any task done
 - Review: <once after every task in this spec is complete and final verification passes;
   configured project mechanism or user choice, terminal signal, and clean-commit requirement>
-- Scope: build only what this spec specifies; propose extras, don't build them
-- Deferred aspects: <confirm the ledger was reconciled; point to it and any required tracker>
+- Scope: build only current scope; deferred scope adds no effort, out-of-scope topics receive
+  no exploration or preparation, and prohibited outcomes must be prevented
+- Deferred scope: <confirm the ledger was reconciled; point to it and any required tracker>
 - Build order: <suggested sequence and why; e.g. riskiest interface first, thin vertical slice>
 - Routing: <per work item: orchestrator or delegate, at what model/effort, and why. Hard core
   needing the orchestrator's accumulated context vs. mechanical/compressible leaf, per the

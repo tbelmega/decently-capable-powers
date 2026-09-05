@@ -22,9 +22,12 @@ Status: Draft - not for implementation
 
 ## Scope boundary
 ### This iteration
-### Deferred aspects summary
-<!-- Summarize the canonical ledger near the end; do not duplicate it here. -->
-### Explicit non-goals
+### Deferred scope summary
+<!-- Summarize the canonical ledger near the end; no extra effort toward these extensions. -->
+### Out of scope
+<!-- No reasoning or implementation now; no judgment about future desirability. -->
+### Prohibited outcomes
+<!-- State what must be prevented and why; cover it in acceptance criteria. -->
 
 ## Risks and failure modes
 
@@ -33,13 +36,13 @@ Status: Draft - not for implementation
 ## Implementation detail
 <!-- Architecture, placement, data flow, errors, testing, and other implementer detail. -->
 
-## Deferred aspects
-<!-- Canonical ledger. For each entry: what, why, return condition, and intended fit. Omit when
-     nothing is deferred. Follow project-defined tracking instructions when they exist. -->
+## Deferred scope
+<!-- Canonical ledger. For each entry: what, why, reconsideration condition, and intended fit
+     if known. Do not design extension points to fill this ledger. Omit when nothing is deferred. Follow project-defined tracking instructions when they exist. -->
 
 ## Implementation guidance
 ```
 
 A reviewer who reads only the first quarter must encounter every decision, assumption, scope
 boundary, deferral, exclusion, and risk on which they could reasonably object or redirect the
-work. Before implementation, the guidance must call out the Deferred aspects ledger again.
+work. Before implementation, the guidance must call out the Deferred scope ledger again.
