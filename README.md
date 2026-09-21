@@ -62,12 +62,14 @@ git clone <this repo> && cd <repo> && ./install.sh
 
 | Surface | Claude Code | Codex CLI | Cursor |
 |---------|-------------|-----------|--------|
-| Always-on guide | `~/.claude/CLAUDE.md` and every `~/.claude-*/CLAUDE.md` (managed section) | `~/.codex/AGENTS.md` (managed section) | Settings → Rules → User Rules (manual paste, prompted by the script) |
+| Always-on guide | `~/.claude/CLAUDE.md` and every `~/.claude-*/CLAUDE.md` (managed section) | `~/.codex/AGENTS.md` (managed section) | `~/.cursor/rules/decently-capable-powers.mdc` (managed file) |
 | Skills | `~/.claude/skills/` (symlinks) | `~/.agents/skills/` (symlinks) | reads both trees automatically |
 
-Skills are symlinked, so repo edits are live immediately; the instruction sections are managed
-between `<DECENTLY-CAPABLE-POWERS>` tags inside a shared `<GENERATED>` wrapper (legacy
-`DCP:START/END` markers are migrated on the next run), so **update = `git pull && ./install.sh`**.
+Skills are symlinked, so repo edits are live immediately. Claude and Codex instruction sections
+are managed between `<DECENTLY-CAPABLE-POWERS>` tags inside a shared `<GENERATED>` wrapper
+(legacy `DCP:START/END` markers are migrated on the next run); Cursor receives the same guide as
+a managed `.mdc` file. If you installed an older release, remove the old pasted User Rules copy
+from Cursor settings; the managed file replaces it. Therefore **update = `git pull && ./install.sh`**.
 For a repo that wants checked-in, team-visible guidance instead: `./install.sh --project <dir>`.
 
 Running several Claude Code profiles (`CLAUDE_CONFIG_DIR=~/.claude-<name>`)? The managed guide

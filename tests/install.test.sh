@@ -335,14 +335,27 @@ check "wrapper closed once" "1" "$(grep -cxF '</GENERATED>' "$claude_md")"
 check "section tag present" "1" "$(grep -cxF '<DECENTLY-CAPABLE-POWERS>' "$claude_md")"
 check "section closed" "1" "$(grep -cxF '</DECENTLY-CAPABLE-POWERS>' "$claude_md")"
 check "codex config tagged too" "1" "$(grep -cxF '<GENERATED>' "$home/.codex/AGENTS.md")"
+cursor_rule="$home/.cursor/rules/decently-capable-powers.mdc"
+check "Cursor user rule created" "1" "$([ -f "$cursor_rule" ] && echo 1 || echo 0)"
+check "Cursor user rule is always applied" "1" "$(grep -cxF 'alwaysApply: true' "$cursor_rule")"
+check "Cursor user rule contains the operating guide" "1" "$(grep -cxF '## Before building' "$cursor_rule")"
+check "Cursor user rule omits config wrapper tags" "0" "$(grep -cF '<DECENTLY-CAPABLE-POWERS>' "$cursor_rule")"
+case "$out" in *"Cursor has no file-based global instructions"*) fail "manual Cursor step remains";;
+  *) ok "manual Cursor step removed";; esac
+case "$out" in *"remove the old pasted User Rules copy"*) ok "Cursor migration notice is shown";;
+  *) fail "Cursor migration notice missing - got: $out";; esac
+check "README documents removal of the old pasted Cursor copy" "1" \
+  "$(grep -cF 'remove the old pasted User Rules copy' "$REPO_DIR/README.md")"
 case "$out" in *"created managed section"*) ok "fresh run reports creation";;
   *) fail "fresh run did not report creation - got: $out";; esac
 
 echo "install.sh: a second run leaves the section byte-identical"
 cp "$claude_md" "$sandbox/before"
+cp "$cursor_rule" "$sandbox/cursor-before"
 HOME="$home" "$install_sh" >/dev/null 2>&1
 check "rerun exits 0" "0" "$?"
 check "config unchanged" "0" "$(cmp -s "$sandbox/before" "$claude_md"; echo $?)"
+check "Cursor rule unchanged" "0" "$(cmp -s "$sandbox/cursor-before" "$cursor_rule"; echo $?)"
 rm -rf "$sandbox"
 
 echo "install.sh: appends below custom content and ignores prose mentions of the tags"

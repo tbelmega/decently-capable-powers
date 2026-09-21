@@ -16,8 +16,8 @@
 #     natively and loads ~/.claude/CLAUDE.md via its Claude compat, which is on
 #     by default - a ~/.grok/AGENTS.md copy would double-load the guide
 #     (ASSUMPTIONS.md A20).
-#   - Prints the one manual step for Cursor (no file-based global instructions;
-#     paste into Settings → Rules).
+#   - Writes an always-applied Cursor user rule to
+#     ~/.cursor/rules/decently-capable-powers.mdc.
 #
 # --repair-links: repoint skill links that dangle - the shape drift takes when this
 #   repo is moved or renamed. Off by default: a dangling target could equally be a
@@ -38,8 +38,8 @@
 #   guidance instead of (or on top of) the user-level install.
 #
 # Idempotent - re-run after every change to this repo. Update = git pull + re-run.
-# Load paths verified against official harness docs 2026-07-02, Grok Build
-# 2026-07-19 (ASSUMPTIONS.md A2/A3/A20); the self-update skill re-verifies them.
+# Load paths verified against official harness docs through 2026-09-21
+# (ASSUMPTIONS.md A2/A3/A20); the self-update skill re-verifies them.
 
 set -euo pipefail
 
@@ -378,6 +378,39 @@ refresh_block() {
   rm -f "$tmp.status"
 }
 
+# Cursor user rules are standalone `.mdc` files rather than sections in a shared
+# config file. The source section has already been validated by materialize_guide;
+# omit its config-only tags and replace the complete DCP-owned file atomically.
+write_cursor_rule() {
+  local target="$1" resolved tmp action
+  if ! resolved="$(resolve_target "$target")"; then
+    echo "  ! $target: symlink chain exceeds $LINK_HOP_LIMIT hops - left untouched"
+    return 0
+  fi
+  mkdir -p "$(dirname "$resolved")"
+  tmp="$(mktemp "$(dirname "$resolved")/.dcp-cursor-rule.XXXXXX")"
+  {
+    echo "---"
+    echo "description: Always-on operating guide from decently-capable-powers. Project rules override on conflict."
+    echo "alwaysApply: true"
+    echo "---"
+    echo
+    echo "# Operating guide"
+    awk -v so="$SEC_OPEN" -v sc="$SEC_CLOSE" '$0 != so && $0 != sc' "$GUIDE_BLOCK"
+  } > "$tmp"
+  if [ -f "$resolved" ] && cmp -s "$tmp" "$resolved"; then
+    rm -f "$tmp"
+    echo "  Cursor user rule already current: $target"
+    return 0
+  fi
+  if [ -f "$resolved" ]; then action="refreshed"; else action="created"; fi
+  mv "$tmp" "$resolved"
+  echo "  Cursor user rule $action: $target"
+  if [ "$action" = "created" ]; then
+    echo "  Cursor migration: remove the old pasted User Rules copy; this managed file replaces it"
+  fi
+}
+
 # The guide section is extracted and validated ONCE, before any target - skill link,
 # seeded file, or config - is touched, so a malformed source aborts with nothing
 # modified. The temp file is cleaned on every exit.
@@ -515,13 +548,9 @@ for alt_profile in "$HOME"/.claude-*/; do
   refresh_block "${alt_profile%/}/CLAUDE.md"
 done
 refresh_block "$HOME/.codex/AGENTS.md"
+write_cursor_rule "$HOME/.cursor/rules/decently-capable-powers.mdc"
 
 cat <<'EOF'
-
-Cursor has no file-based global instructions - one manual step:
-  paste the contents of this repo's AGENTS.md into
-  Cursor → Settings → Rules → User Rules, and re-paste whenever the guide
-  changes. (Skills reach Cursor automatically via the symlinks above.)
 
 Done.
 EOF
