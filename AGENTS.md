@@ -54,7 +54,9 @@ architecture and step back. → On any bug/test failure/unexpected behavior, loa
 
 ## Verify before completion
 Never claim done/fixed/passing without running the check and showing the evidence. The check
-must be the original, unweakened one. Ban "should", "seems", "probably". → For the full
+must be the original, unweakened one. Run appropriate checks once; repeat or broaden only after
+new changes, failures, or unresolved risk. Do not add verifier subagents automatically.
+Ban "should", "seems", "probably". → For the full
 checklist, load `verification-before-completion`.
 
 ## Commits
@@ -188,8 +190,9 @@ prompt, review finding); the comment outlives the reference, so state the constr
 → When writing or reviewing code, load `coding-standards`.
 
 ## Choosing model and effort
-Match the model and reasoning effort to the task; prefer high effort over max; max measurably
-overthinks. If the work clearly fits a different model or harness in the user's roster better,
+Match the model and reasoning effort to the current roster and owner direction; effort costs
+and quality vary by model version. If the work clearly fits a different model or harness in the
+user's roster better,
 say so before proceeding rather than grinding through. → Before assigning model or effort to any
 work item, including a subagent dispatch, load `model-selection`.
 

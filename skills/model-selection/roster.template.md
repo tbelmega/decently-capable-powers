@@ -8,14 +8,11 @@
 | Tool | Sweet spot | Watch out |
 |------|-----------|-----------|
 
-<!-- One row per harness/subscription you actually hold, e.g.:
-     | Opus 5 (Claude Code), medium-high effort - the workhorse | Planning, difficult implementation, multi-file refactors, debugging, review, orchestration, and meta/design; default for interactive and most unattended agent work | Longer output and more eager narration/delegation; inherited verification instructions can cause redundant work; thinking is on by default and billed as output |
-     | Fable 5 (Claude Code) - the frontier exception | Only the hardest long-horizon autonomous work where Opus-level failure would be materially expensive; route by demonstrated capability need and failure cost, not duration alone | 2× Opus cost; slower; safety classifiers can reroute benign-adjacent security work; requires 30-day data retention |
-     | Sonnet 5 (Claude Code) - the economical execution tier | Well-specified mechanical implementation, high-volume sweeps, exploration, and variants with cheap verification | Lower capability tail; retries erase savings; local over-engineering risk to verify |
-     | Grok 4.5 (Grok Build) | Cheap agentic volume seat: near-frontier tool use, ~2× token-efficiency per task; high-volume, long-horizon tool-heavy loops on routine-to-moderate work | Not a frontier reasoner (trails Opus on the hardest SWE tiers); confident hallucination/arithmetic drift - verify its numbers and long-context facts |
-     Columns: tool + harness + usable effort range; what to route to it; its failure modes.
-     Opus/Fable/Sonnet/Grok tier characteristics above are generic model facts, so keep them; only
-     your subscription/pricing specifics (which plans you hold, spend caps) must stay out. -->
+<!-- Example current routes, without personal subscription data:
+     | Opus 5.5 (Claude Code), medium effort | Planning, implementation, debugging, review and workers | Keep scope bounded; model defaults and effort costs vary by version |
+     | GPT-6.1 Sol (Codex), medium effort | GPT work, including ordinary and confirmation review and config/meta work | Preserve evidence and permission boundaries; API benchmarks do not prove local success or quota cost |
+     Columns: model + harness + exact effort; assigned work; relevant limitations.
+     Record personal subscriptions and allocation only in roster.local.md. -->
 
 ## Parked
 

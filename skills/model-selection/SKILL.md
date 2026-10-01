@@ -29,46 +29,36 @@ agent-handover; cross-model review happens on the PR, no bridge needed.
 
 ## Reasoning Effort
 
-- Default medium/high. Raise only for genuinely hard reasoning: architecture, gnarly debugging,
-  wide-blast-radius refactors.
-- **Effort is model-specific.** For Opus 5, high is the default and medium fits bounded work;
-  xhigh and max are legitimate for unusually deep tasks when their token, latency, and context
-  costs are justified. Follow the roster for other models.
-- Don't pay high effort for mechanical work: renames, boilerplate, formatting, config.
+- Use the model and effort selected in the current roster. Do not carry effort settings
+  between model versions or escalate a standing assignment without owner direction.
+- The current Claude default is Opus 5.5 medium; the current GPT default is GPT-6.1 Sol
+  medium. Higher effort is not a universal improvement. Evaluate quality and cost before
+  proposing a different setting.
 
 ## Patterns
 
-- **Plan strong, implement to fit:** use Opus 5 high for planning and complex implementation.
-  Use Sonnet for bounded, checkable execution and Fable only for the frontier tail. This matches
-  the spec-carried-guidance workflow (brainstorming skill). An implementation's orchestrator
-  cannot delegate up, so give it the cheapest tier that still covers the hardest item it keeps.
-- **Cross-model review:** have a different model review than the one that wrote the code -
-  models are blind to their own systematic errors. If the roster names a standing reviewer,
-  use it. (Judgment call, not research-verified.)
-- **Arbitrage limits:** when one subscription's limit nears, hand the work off
-  (agent-handover skill) instead of stopping or degrading.
-- **Escalate, don't grind:** a task repeatedly failing at the current tier means step up in
-  model/effort, or step back to design. Repetition without change burns budget for nothing.
+- **Plan and implement to fit:** use the roster's selected seat for planning and implementation.
+  Match task scope to the available capability; report a capability limitation rather than
+  silently selecting another model. A spec's implementation guidance records the exact route.
+- **Cross-model review:** use the other model family to review the work. Follow the roster's
+  standing assignment and the configured review mechanism. This is a judgment about a useful
+  independent perspective, not proof that all systematic errors will be caught.
+- **Arbitrage limits:** when one subscription's limit nears, hand the work off using
+  agent-handover. Preserve the owner's work allocation and report an unavailable required seat.
+- **Escalate, don't grind:** repeated capability failures justify asking for a different route
+  or stepping back to design; they do not authorize silently changing the selected model.
 
 ## Subagent Routing (within a harness)
 
-The roster routes across harnesses; a subagent dispatch routes *within* one. Same economics,
-one trap:
-
-- **Built-in agents inherit the session's model** (Claude Code ≥ 2.1.198; Explore is capped at
-  Opus on the Claude API, Plan and general-purpose inherit uncapped; see ASSUMPTIONS.md A15). From
-  an Opus session, an un-overridden Explore sweep runs on Opus.
-- **Override per dispatch:** pass an explicit `model` (and effort where supported) matched to
-  the work: haiku for reference sweeps and throwaway edits, sonnet for well-specified bounded
-  implementation, opus for judgment and difficult work, and fable only for frontier-tail work
-  where an Opus failure would be materially expensive. Inherit only when the subagent genuinely
-  needs the session's tier.
-- **The watch-out column follows the model into the dispatch:** review a Sonnet subagent's diff
-  for over-engineering exactly as you would a Sonnet session's.
-- **Delegate for token efficiency, never wall-clock speed** (default - A16; override in
-  `roster.local.md` if you have flat-rate parallel capacity): each dispatch rebuilds context
-  from cold. Default to sequential and fewer, bigger delegations; a piece earns a dispatch on
-  its own merits (compressible, or context-polluting), never to run alongside another.
+- Claude workers use Opus 5.5 medium; GPT workers use GPT-6.1 Sol medium, unless the current
+  personal roster explicitly overrides those defaults.
+- Pass an explicit model and effort where supported. Built-in model inheritance and aliases
+  vary by harness; verify the resolved version rather than assuming an alias pins it.
+- The roster's watch-outs follow the model into each dispatch. Inspect the returned work and
+  verify the evidence appropriate to the task.
+- Delegate for token efficiency, not wall-clock speed. Fresh contexts and conversation forks
+  have different overhead. Default to fewer, larger dispatches; delegate compressible or
+  context-polluting work only when the expected context benefit justifies its cost.
 
 ## For Agents
 

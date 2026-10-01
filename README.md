@@ -4,9 +4,9 @@ A minimalist fork of [obra/superpowers](https://github.com/obra/superpowers) by 
 rebuilt in July 2026 against verified, current harness and model behavior.
 
 The original Superpowers is a complete software-development methodology for coding agents. This
-fork strips it to the behavioral discipline that still changes what an agent does, verifies every
-load-bearing assumption with dated research, and installs as user-level config for Claude Code,
-OpenAI Codex, and Cursor.
+fork strips it to the behavioral discipline that still changes what an agent does, reviews its
+load-bearing assumptions against dated research and explicit maintainer preferences, and installs
+as user-level config for Claude Code, OpenAI Codex, and Cursor.
 
 ## North star
 
@@ -25,14 +25,14 @@ OpenAI Codex, and Cursor.
 ## What's here
 
 **[`AGENTS.md`](AGENTS.md) - the always-on operating guide.** One essence per discipline, plus a
-"→ load skill X" pointer to the fuller procedure. Read natively by Codex and Cursor; reaches
-Claude Code via `CLAUDE.md`. This is the reliable layer - skills auto-trigger probabilistically,
+"→ load skill X" pointer to the fuller procedure. Read natively by Codex and Cursor; Claude Code
+can read it directly under its documented discovery rules, while the compatible `CLAUDE.md`
+import remains supported. This is the reliable layer - skills auto-trigger probabilistically,
 essences are always in context. Final handoffs of distinct bodies of work end with a fixed
 receipt - implementation, verification, independent review, and next step/options - so
 completion state and the available exits are visible across harnesses without scrolling.
 
-**`skills/` - ten, loaded on demand.** Each exists to counter a failure mode current models
-measurably still have:
+**`skills/` - ten, loaded on demand.** Each addresses a documented risk or an explicit maintainer discipline:
 
 | Skill | Counters |
 |-------|----------|
@@ -51,8 +51,9 @@ Personal setup never lives in published skill text: your model roster and your s
 rules go in gitignored `*.local.md` files seeded from checked-in templates at install (see
 below).
 
-**[`ASSUMPTIONS.md`](ASSUMPTIONS.md)** - the registry of empirical claims behind all of the
-above, each with what it justifies, a last-verified date, and evidence in `docs/research/`.
+**[`ASSUMPTIONS.md`](ASSUMPTIONS.md)** - the registry of empirical claims and maintainer
+preferences behind the guidance,
+each with what it justifies, a last-reviewed date, and evidence or rationale.
 
 ## Install / update
 

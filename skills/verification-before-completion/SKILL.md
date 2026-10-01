@@ -14,16 +14,20 @@ dishonesty, not efficiency.
 NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 ```
 
-If you haven't run the verification command in this turn, you cannot claim it passes.
+Use fresh evidence for the final work state. A passing check from this turn remains evidence
+until relevant changes, failures, or unresolved risk require another run.
 
 ## The Gate
 
 Before claiming any status:
 
 1. **Identify** the command that proves the claim
-2. **Run** it, fresh and complete
+2. **Run** it, fresh and complete, unless current-state evidence already exists in this turn
 3. **Read** the full output; check the exit code; count the failures
 4. **Only then** state the claim, together with the evidence
+
+Run checks appropriate to the change once. Repeat or broaden only after relevant changes,
+failures, or unresolved risk. Do not add verifier subagents automatically.
 
 ## What Each Claim Requires
 
