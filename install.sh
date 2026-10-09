@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # install.sh - deploy decently-capable-powers into user-level agent config.
 #
-# Default (no args): user-level install covering all four harnesses.
+# Default (no args): user-level install covering all five harnesses.
 #   - Symlinks each skills/<name>/ into ~/.claude/skills/ (read by Claude Code
 #     and Cursor) and ~/.agents/skills/ (read by Codex, Cursor, and Grok Build).
 #     Cursor and Grok Build read both trees; identical names resolve to
@@ -18,6 +18,9 @@
 #     (ASSUMPTIONS.md A20).
 #   - Writes an always-applied Cursor user rule to
 #     ~/.cursor/rules/decently-capable-powers.mdc.
+#   - Kiro CLI: symlinks the skills into ~/.kiro/skills/ and writes the guide as
+#     an always-included global steering file,
+#     ~/.kiro/steering/decently-capable-powers.md (ASSUMPTIONS.md A26).
 #
 # --repair-links: repoint skill links that dangle - the shape drift takes when this
 #   repo is moved or renamed. Off by default: a dangling target could equally be a
@@ -28,7 +31,7 @@
 #   Use it for each extra Claude profile / CLAUDE_CONFIG_DIR you run - e.g. a
 #   machine with several profiles wires them all in one invocation:
 #     ./install.sh --config-dir ~/.claude-work --config-dir ~/.claude-personal
-#   The default ~/.claude and ~/.agents targets are always linked as well. The
+#   The default ~/.claude, ~/.agents and ~/.kiro targets are always linked as well. The
 #   operating-guide section needs no such flag - every ~/.claude-* profile is
 #   targeted automatically - but skills carry no such convention, so without
 #   this flag their links are hand-made and never refreshed.
@@ -39,7 +42,7 @@
 #
 # Idempotent - re-run after every change to this repo. Update = git pull + re-run.
 # Load paths verified against official harness docs through 2026-09-21
-# (ASSUMPTIONS.md A2/A3/A20); the self-update skill re-verifies them.
+# (ASSUMPTIONS.md A2/A3/A20/A26); the self-update skill re-verifies them.
 
 set -euo pipefail
 
@@ -378,21 +381,24 @@ refresh_block() {
   rm -f "$tmp.status"
 }
 
-# Cursor user rules are standalone `.mdc` files rather than sections in a shared
-# config file. The source section has already been validated by materialize_guide;
-# omit its config-only tags and replace the complete DCP-owned file atomically.
-write_cursor_rule() {
-  local target="$1" resolved tmp action
+# Cursor user rules and Kiro steering files are standalone files rather than sections
+# in a shared config file. The source section has already been validated by
+# materialize_guide; omit its config-only tags, prefix the harness's frontmatter ($3,
+# one line per field), and replace the complete DCP-owned file atomically. $2 names
+# the file in the report. Sets OWNED_GUIDE_ACTION to created, refreshed, current or
+# skipped for callers with follow-up notices.
+write_owned_guide() {
+  local target="$1" label="$2" frontmatter="$3" resolved tmp action
+  OWNED_GUIDE_ACTION=skipped
   if ! resolved="$(resolve_target "$target")"; then
     echo "  ! $target: symlink chain exceeds $LINK_HOP_LIMIT hops - left untouched"
     return 0
   fi
   mkdir -p "$(dirname "$resolved")"
-  tmp="$(mktemp "$(dirname "$resolved")/.dcp-cursor-rule.XXXXXX")"
+  tmp="$(mktemp "$(dirname "$resolved")/.dcp-owned-guide.XXXXXX")"
   {
     echo "---"
-    echo "description: Always-on operating guide from decently-capable-powers. Project rules override on conflict."
-    echo "alwaysApply: true"
+    printf '%s\n' "$frontmatter"
     echo "---"
     echo
     echo "# Operating guide"
@@ -400,13 +406,21 @@ write_cursor_rule() {
   } > "$tmp"
   if [ -f "$resolved" ] && cmp -s "$tmp" "$resolved"; then
     rm -f "$tmp"
-    echo "  Cursor user rule already current: $target"
+    echo "  $label already current: $target"
+    OWNED_GUIDE_ACTION=current
     return 0
   fi
   if [ -f "$resolved" ]; then action="refreshed"; else action="created"; fi
   mv "$tmp" "$resolved"
-  echo "  Cursor user rule $action: $target"
-  if [ "$action" = "created" ]; then
+  echo "  $label $action: $target"
+  OWNED_GUIDE_ACTION="$action"
+}
+
+write_cursor_rule() {
+  write_owned_guide "$1" "Cursor user rule" \
+    "description: Always-on operating guide from decently-capable-powers. Project rules override on conflict.
+alwaysApply: true"
+  if [ "$OWNED_GUIDE_ACTION" = "created" ]; then
     echo "  Cursor migration: remove the old pasted User Rules copy; this managed file replaces it"
   fi
 }
@@ -509,7 +523,7 @@ done
 # others not. Inspecting a path is not enough: `mkdir -p` succeeds on a path that
 # already exists read-only, and a path under a regular file fails only on the
 # attempt. So attempt both, with the same symlink operation link_skills will use.
-default_targets=("$HOME/.claude/skills" "$HOME/.agents/skills")
+default_targets=("$HOME/.claude/skills" "$HOME/.agents/skills" "$HOME/.kiro/skills")
 extra_targets=()
 for extra_dir in ${extra_config_dirs[@]+"${extra_config_dirs[@]}"}; do
   extra_targets+=("$extra_dir/skills")
@@ -549,6 +563,8 @@ for alt_profile in "$HOME"/.claude-*/; do
 done
 refresh_block "$HOME/.codex/AGENTS.md"
 write_cursor_rule "$HOME/.cursor/rules/decently-capable-powers.mdc"
+# Kiro loads every ~/.kiro/steering/*.md as global steering; `always` is also its default.
+write_owned_guide "$HOME/.kiro/steering/decently-capable-powers.md" "Kiro steering file" "inclusion: always"
 
 cat <<'EOF'
 

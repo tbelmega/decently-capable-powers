@@ -166,6 +166,7 @@ HOME="$home" "$install_sh" --config-dir "$spaced" --config-dir "$home/.claude-se
 check "run exits 0" "0" "$?"
 check "default ~/.claude linked" "$skill_count" "$(count_links_into_fixture "$home/.claude/skills")"
 check "default ~/.agents linked" "$skill_count" "$(count_links_into_fixture "$home/.agents/skills")"
+check "default ~/.kiro linked" "$skill_count" "$(count_links_into_fixture "$home/.kiro/skills")"
 check "profile with spaces linked" "$skill_count" "$(count_links_into_fixture "$spaced/skills")"
 check "second profile linked" "$skill_count" "$(count_links_into_fixture "$home/.claude-second/skills")"
 check "personal config seeded inside the fixture, not the checkout" "1" \
@@ -346,16 +347,26 @@ case "$out" in *"remove the old pasted User Rules copy"*) ok "Cursor migration n
   *) fail "Cursor migration notice missing - got: $out";; esac
 check "README documents removal of the old pasted Cursor copy" "1" \
   "$(grep -cF 'remove the old pasted User Rules copy' "$REPO_DIR/README.md")"
+kiro_steering="$home/.kiro/steering/decently-capable-powers.md"
+check "Kiro steering file created" "1" "$([ -f "$kiro_steering" ] && echo 1 || echo 0)"
+check "Kiro steering file opens with frontmatter" "---" "$(head -1 "$kiro_steering")"
+check "Kiro steering file is always included" "1" "$(grep -cxF 'inclusion: always' "$kiro_steering")"
+check "Kiro steering file contains the operating guide" "1" "$(grep -cxF '## Before building' "$kiro_steering")"
+check "Kiro steering file omits config wrapper tags" "0" "$(grep -cF '<DECENTLY-CAPABLE-POWERS>' "$kiro_steering")"
 case "$out" in *"created managed section"*) ok "fresh run reports creation";;
   *) fail "fresh run did not report creation - got: $out";; esac
 
 echo "install.sh: a second run leaves the section byte-identical"
 cp "$claude_md" "$sandbox/before"
 cp "$cursor_rule" "$sandbox/cursor-before"
-HOME="$home" "$install_sh" >/dev/null 2>&1
+cp "$kiro_steering" "$sandbox/kiro-before"
+out="$(HOME="$home" "$install_sh" 2>&1)"
 check "rerun exits 0" "0" "$?"
 check "config unchanged" "0" "$(cmp -s "$sandbox/before" "$claude_md"; echo $?)"
 check "Cursor rule unchanged" "0" "$(cmp -s "$sandbox/cursor-before" "$cursor_rule"; echo $?)"
+check "Kiro steering file unchanged" "0" "$(cmp -s "$sandbox/kiro-before" "$kiro_steering"; echo $?)"
+case "$out" in *"remove the old pasted User Rules copy"*) fail "Cursor migration notice repeated on rerun";;
+  *) ok "Cursor migration notice shown only on creation";; esac
 rm -rf "$sandbox"
 
 echo "install.sh: appends below custom content and ignores prose mentions of the tags"

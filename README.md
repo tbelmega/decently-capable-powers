@@ -6,7 +6,7 @@ rebuilt in July 2026 against verified, current harness and model behavior.
 The original Superpowers is a complete software-development methodology for coding agents. This
 fork strips it to the behavioral discipline that still changes what an agent does, reviews its
 load-bearing assumptions against dated research and explicit maintainer preferences, and installs
-as user-level config for Claude Code, OpenAI Codex, and Cursor.
+as user-level config for Claude Code, OpenAI Codex, Cursor, and Kiro CLI.
 
 ## North star
 
@@ -61,15 +61,15 @@ each with what it justifies, a last-reviewed date, and evidence or rationale.
 git clone <this repo> && cd <repo> && ./install.sh
 ```
 
-| Surface | Claude Code | Codex CLI | Cursor |
-|---------|-------------|-----------|--------|
-| Always-on guide | `~/.claude/CLAUDE.md` and every `~/.claude-*/CLAUDE.md` (managed section) | `~/.codex/AGENTS.md` (managed section) | `~/.cursor/rules/decently-capable-powers.mdc` (managed file) |
-| Skills | `~/.claude/skills/` (symlinks) | `~/.agents/skills/` (symlinks) | reads both trees automatically |
+| Surface | Claude Code | Codex CLI | Cursor | Kiro CLI |
+|---------|-------------|-----------|--------|----------|
+| Always-on guide | `~/.claude/CLAUDE.md` and every `~/.claude-*/CLAUDE.md` (managed section) | `~/.codex/AGENTS.md` (managed section) | `~/.cursor/rules/decently-capable-powers.mdc` (managed file) | `~/.kiro/steering/decently-capable-powers.md` (managed file) |
+| Skills | `~/.claude/skills/` (symlinks) | `~/.agents/skills/` (symlinks) | reads both trees automatically | `~/.kiro/skills/` (symlinks) |
 
 Skills are symlinked, so repo edits are live immediately. Claude and Codex instruction sections
 are managed between `<DECENTLY-CAPABLE-POWERS>` tags inside a shared `<GENERATED>` wrapper
 (legacy `DCP:START/END` markers are migrated on the next run); Cursor receives the same guide as
-a managed `.mdc` file. If you installed an older release, remove the old pasted User Rules copy
+a managed `.mdc` file, and Kiro CLI as an always-included global steering file. If you installed an older release, remove the old pasted User Rules copy
 from Cursor settings; the managed file replaces it. Therefore **update = `git pull && ./install.sh`**.
 For a repo that wants checked-in, team-visible guidance instead: `./install.sh --project <dir>`.
 
