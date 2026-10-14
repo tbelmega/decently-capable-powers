@@ -1,6 +1,6 @@
 ---
 name: research
-description: Use when you need to map how a codebase, system, or feature currently works before planning or implementing against it, or when asked to document current behavior in depth
+description: Use when exploring a codebase, external system, process or feature currently works, or when asked to document current behavior in depth. This skill lets you write a standardized persistent summary of your findings, which is convenient for the human to review.
 ---
 
 # Research
@@ -20,6 +20,7 @@ update them if necessary, or (3) proceed with the full research workflow.
 - Read every relevant file, not just entry points.
 - Trace data flow end-to-end.
 - Read callsites, not just definitions.
+- Read documentation in a codebase and other accessible sources, e.g. websites. If you have access to source code, confirm claims of the documentation by looking at the code, instead of taking the documentation by its word.
 - Capture conventions, hidden coupling, surprising behavior, risks, and any bugs found.
 - If the goal is bug hunting, keep reading until all likely bugs in scope are documented.
 

@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: Use when the user asks to brainstorm, or before feature-level work (new features, components, behavior changes) the user hasn't already fully specified; turns an idea into an agreed design before implementation
+description: Use when the user asks to brainstorm, asks to write a spec, or when starting feature-level work (new features, components, behavior changes) that isn't specified in a persistent file yet; turns an idea into an agreed design before implementation
 ---
 
 # Brainstorming Ideas Into Designs
