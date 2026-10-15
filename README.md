@@ -29,7 +29,7 @@ as user-level config for Claude Code, OpenAI Codex, Cursor, and Kiro CLI.
 can read it directly under its documented discovery rules, while the compatible `CLAUDE.md`
 import remains supported. This is the reliable layer - skills auto-trigger probabilistically,
 essences are always in context. Final handoffs of distinct bodies of work end with a fixed
-receipt - implementation, verification, independent review, and next step/options - so
+receipt - work status, verification, independent review, and next step/options - so
 completion state and the available exits are visible across harnesses without scrolling.
 
 **`skills/` - ten, loaded on demand.** Each addresses a documented risk or an explicit maintainer discipline:

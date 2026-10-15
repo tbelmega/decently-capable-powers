@@ -134,19 +134,33 @@ If the requested handoff state prevents review, preserve that state and report r
 the last thing you print, after the prose. In a terminal the final lines are what the user sees without
 scrolling, so status lands at a glance; this is the one place the "asks first, evidence behind"
 ordering is deliberately inverted. Keep the explanatory summary of what changed above it.
-Add concise command, HEAD, URL, or review-artifact evidence after each status:
+After each status, give the sentence described below, then concise command, HEAD, URL, or
+review-artifact evidence:
 
-    IMPLEMENTATION: COMPLETE|INCOMPLETE
+    <WORK TYPE>: COMPLETE|INCOMPLETE - <one sentence: what this work was and what for>
 
-    VERIFICATION: PASSED|FAILED|NOT RUN
+    VERIFICATION: PASSED|FAILED|NOT RUN - <one sentence: what was checked>
 
-    REVIEW: PASSED|REQUESTED|BLOCKED|NOT CONFIGURED|WAIVED|NOT RUN
+    REVIEW: PASSED|REQUESTED|BLOCKED|NOT CONFIGURED|WAIVED|NOT RUN - <reviewer, rounds>
 
     NEXT STEP/OPTIONS: <what happens next, or the alternatives when it is the user's call>
 
+Print the four lines as plain paragraphs separated by blank lines, never inside a code block:
+a Markdown renderer joins adjacent lines into one paragraph, and a code block does not wrap the
+sentences.
+
+`<WORK TYPE>` names the kind of work actually done, as specifically as fits: IMPLEMENTATION, FIX,
+SPEC, PLAN, RESEARCH, DOCS; TASK only when nothing narrower fits. The sentence after its status is
+for a user who has just switched in from another thread and remembers nothing of this one: say in
+plain words what the work was and what it was for, without ticket numbers, finding IDs, or other
+references they would have to look up. The `VERIFICATION` sentence says what the check was
+(e.g. "typecheck and unit tests").
+
 `REQUESTED` means an asynchronous tool or human has the review but has not completed it; `WAIVED`
 requires the user's explicit opt-out. Never claim the overall work complete when its
-required review has not passed.
+required review has not passed. When `REVIEW` is `BLOCKED`, its line also states the risk of
+landing now: what is unreviewed, what covers it anyway (e.g. green tests), how confident you are
+in it and why, and the impact if it is wrong.
 
 `NEXT STEP/OPTIONS` is mandatory. When the work is cleanly finished, one line naming the single
 next action is enough. When anything is unresolved (review blocked or capped, verification
