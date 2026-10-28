@@ -8,6 +8,14 @@ but never cite a skill ("per X") you haven't actually loaded; apply the essence 
 load the skill.
 
 ## Before building
+A work-stream is work that changes a project's behavior (for users, calling code, tests and CI,
+or agents reading its instructions) or whose state must outlive the conversation (a spec, a
+decision from the user, a delivery, a later session); when unsure, it is one. Everything else is
+an errand (answering, locating code, saving a memory, a throwaway script, or a change that alters
+no behavior: comments, formatting, ignore files, metadata). Errands skip the per-work-stream
+questions, the review and the receipt; one that changed files ends with the line `Errand: <what
+changed>; no behavior change.` A commit takes the class of what it commits; an errand found to
+change behavior becomes a work-stream.
 For non-trivial work the user hasn't already fully specified, turn the idea into an agreed design
 before implementing. → When starting feature/creative work, load `brainstorming`.
 
@@ -35,8 +43,8 @@ actually works first; don't guess from names. → To map or document current beh
 `research`.
 
 ## Testing - decide once per work-stream, not per task
-When you start a distinct body of work (a new plan/epic, or the first code-changing turn), ask
-the user once whether to follow TDD, and let them scope it ("yes for domain logic, no for infra").
+When a work-stream starts, ask the user once whether to follow TDD, and let them scope it ("yes
+for domain logic, no for infra").
 Don't re-ask per task; re-ask only when the work clearly shifts to a different area. When TDD is
 on: prefer integration-style tests over mock-heavy unit tests, shape structure before
 implementing, and skip infra/config/throwaway unless asked. → When TDD is on, load
@@ -61,13 +69,13 @@ checklist, load `verification-before-completion`.
 
 ## Commits
 End each task by running typecheck + tests; commit when green so the work is recoverable.
-Distinguish temporary workstream history from the durable history merged into the integration
+Distinguish temporary work-stream history from the durable history merged into the integration
 branch. On an unmerged agent or feature branch, use whatever commit granularity makes
 implementation, recovery, and review effective. When working linearly on one coherent change,
 prefer amending the current commit; separate temporary commits are also acceptable when they
 help the review mechanism.
 
-Before merging into the integration branch, consolidate the workstream into durable logical
+Before merging into the integration branch, consolidate the work-stream into durable logical
 commits. Every commit entering that branch must meet the requirements below. Also follow compatible
 commit-message conventions in the repository or its house rules. If an explicit convention
 conflicts with one requirement, follow it only for that conflict and retain every non-conflicting
@@ -117,23 +125,22 @@ The one decision that *is* yours to raise: as with testing, ask once per work-st
 work in an isolated branch or the current checkout; don't re-ask per task.
 
 ## Independent review before hand-off
-When you start a distinct body of work (a new plan/epic, or the first code-changing turn),
-check whether the project defines a mechanism to request a code review. If not, ask the user once
-whether to request a code review at the end of this workstream and let them scope it ("raise a PR
-for human review" or "invoke tool X").
+When a work-stream starts, check whether the project defines a mechanism to request a code review.
+If not, ask the user once whether to request a code review at its end and let them scope it
+("raise a PR for human review" or "invoke tool X").
 
 Note that decision, or the project's standing rule, at the end of the spec / plan / tracking
 item it belongs to.
 
-After every task in the distinct body of work is complete and final verification passes, request
+After every task in the work-stream is complete and final verification passes, request
 the review without waiting for the user to remind you.
 If the requested handoff state prevents review, preserve that state and report review as `NOT RUN`.
 
 ## Completion receipt
-**End** the final handoff of a distinct body of work with the four statuses below; they are
-the last thing you print, after the prose. In a terminal the final lines are what the user sees without
-scrolling, so status lands at a glance; this is the one place the "asks first, evidence behind"
-ordering is deliberately inverted. Keep the explanatory summary of what changed above it.
+**End** the final handoff of a work-stream with the four statuses below, using only these states;
+they are the last thing you print, after the prose. In a terminal the final lines are what the user
+sees without scrolling, so status lands at a glance; this is the one place the "asks first,
+evidence behind" ordering is deliberately inverted. Keep the explanatory summary of what changed above it.
 After each status, give the sentence described below, then concise command, HEAD, URL, or
 review-artifact evidence:
 
