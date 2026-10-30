@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # install.sh - deploy decently-capable-powers into user-level agent config.
 #
-# Default (no args): user-level install covering all five harnesses.
+# Default (no args): user-level install covering all six harnesses.
 #   - Symlinks each skills/<name>/ into ~/.claude/skills/ (read by Claude Code
 #     and Cursor) and ~/.agents/skills/ (read by Codex, Cursor, and Grok Build).
 #     Cursor and Grok Build read both trees; identical names resolve to
@@ -21,6 +21,10 @@
 #   - Kiro CLI: symlinks the skills into ~/.kiro/skills/ and writes the guide as
 #     an always-included global steering file,
 #     ~/.kiro/steering/decently-capable-powers.md (ASSUMPTIONS.md A26).
+#   - OpenCode (only where its session store or credentials exist): links
+#     ~/.config/opencode/AGENTS.md to ~/.claude/CLAUDE.md, or adds the section to
+#     an AGENTS.md that already exists (ASSUMPTIONS.md A27). Both roots honor
+#     XDG_DATA_HOME and XDG_CONFIG_HOME, as OpenCode does.
 #
 # --repair-links: repoint skill links that dangle - the shape drift takes when this
 #   repo is moved or renamed. Off by default: a dangling target could equally be a
@@ -42,7 +46,7 @@
 #
 # Idempotent - re-run after every change to this repo. Update = git pull + re-run.
 # Load paths verified against official harness docs through 2026-09-21
-# (ASSUMPTIONS.md A2/A3/A20/A26); the self-update skill re-verifies them.
+# (ASSUMPTIONS.md A2/A3/A20/A26/A27); the self-update skill re-verifies them.
 
 set -euo pipefail
 
@@ -416,6 +420,29 @@ write_owned_guide() {
   OWNED_GUIDE_ACTION="$action"
 }
 
+# OpenCode loads only the first of ~/.config/opencode/AGENTS.md and ~/.claude/CLAUDE.md,
+# and OpenCode 2 drops the CLAUDE.md fallback. A copy of this section alone would hide
+# everything else the user keeps in CLAUDE.md, so OpenCode gets a link to that whole file.
+# An existing AGENTS.md already shadows CLAUDE.md and gets the section like any guide
+# file. `opencode --version` creates the XDG directories, so only the session store or
+# credentials count as evidence that OpenCode is in use. Both roots follow XDG, as
+# OpenCode resolves them.
+link_opencode_guide() {
+  local data="${XDG_DATA_HOME:-$HOME/.local/share}/opencode"
+  local target="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/AGENTS.md"
+  local guide="$HOME/.claude/CLAUDE.md"
+  [ -e "$data/opencode.db" ] || [ -e "$data/auth.json" ] || return 0
+  if [ -L "$target" ] && [ "$(readlink "$target")" = "$guide" ]; then
+    echo "  OpenCode guide link already current: $target"
+  elif [ -e "$target" ] || [ -L "$target" ]; then
+    refresh_block "$target"
+  else
+    mkdir -p "$(dirname "$target")"
+    ln -s "$guide" "$target"
+    echo "  OpenCode guide linked: $target -> $guide"
+  fi
+}
+
 write_cursor_rule() {
   write_owned_guide "$1" "Cursor user rule" \
     "description: Always-on operating guide from decently-capable-powers. Project rules override on conflict.
@@ -565,6 +592,7 @@ refresh_block "$HOME/.codex/AGENTS.md"
 write_cursor_rule "$HOME/.cursor/rules/decently-capable-powers.mdc"
 # Kiro loads every ~/.kiro/steering/*.md as global steering; `always` is also its default.
 write_owned_guide "$HOME/.kiro/steering/decently-capable-powers.md" "Kiro steering file" "inclusion: always"
+link_opencode_guide
 
 cat <<'EOF'
 

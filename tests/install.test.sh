@@ -16,6 +16,10 @@
 
 set -uo pipefail
 
+# The installer honors XDG_DATA_HOME and XDG_CONFIG_HOME; inherited values would point a
+# sandboxed run at the invoking user's real config. Cases that need them set them explicitly.
+unset XDG_DATA_HOME XDG_CONFIG_HOME
+
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEST_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 failures=0
@@ -157,6 +161,56 @@ check "--project exits 0" "0" "$?"
 check "AGENTS.md written" "1" "$([ -f "$sandbox/proj/AGENTS.md" ] && echo 1 || echo 0)"
 check "CLAUDE.md imports it" "1" "$(grep -c '@AGENTS.md' "$sandbox/proj/CLAUDE.md")"
 check "no user-level skills touched" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
+rm -rf "$sandbox"
+
+echo "install.sh: OpenCode gets the whole Claude guide file, never a partial copy"
+new_sandbox
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "no OpenCode use, no OpenCode target" "0" \
+  "$([ -e "$home/.config/opencode/AGENTS.md" ] || [ -L "$home/.config/opencode/AGENTS.md" ] && echo 1 || echo 0)"
+mkdir -p "$home/.local/share/opencode"
+: > "$home/.local/share/opencode/opencode.db"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "OpenCode in use: AGENTS.md links to the Claude guide" "$home/.claude/CLAUDE.md" \
+  "$(link_target "$home/.config/opencode/AGENTS.md")"
+out="$(HOME="$home" "$install_sh" 2>&1)"
+check "rerun keeps the link" "$home/.claude/CLAUDE.md" "$(link_target "$home/.config/opencode/AGENTS.md")"
+case "$out" in *"OpenCode guide link already current"*) ok "rerun reports the link as current";;
+  *) fail "rerun did not report the OpenCode link as current";; esac
+rm -rf "$sandbox"
+
+echo "install.sh: an existing OpenCode AGENTS.md keeps its content and gains the section"
+new_sandbox
+mkdir -p "$home/.local/share/opencode" "$home/.config/opencode"
+: > "$home/.local/share/opencode/auth.json"
+printf 'Owner notes for OpenCode.\n' > "$home/.config/opencode/AGENTS.md"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "existing file is not replaced by a link" "<not a link>" "$(link_target "$home/.config/opencode/AGENTS.md")"
+check "existing content kept" "1" "$(grep -c 'Owner notes for OpenCode.' "$home/.config/opencode/AGENTS.md")"
+check "managed section added" "1" "$(grep -c '^<DECENTLY-CAPABLE-POWERS>$' "$home/.config/opencode/AGENTS.md")"
+rm -rf "$sandbox"
+
+echo "install.sh: an existing OpenCode link to another guide is kept and its referent refreshed"
+new_sandbox
+mkdir -p "$home/.local/share/opencode" "$home/.config/opencode" "$sandbox/shared"
+: > "$home/.local/share/opencode/opencode.db"
+printf 'Shared team notes.\n' > "$sandbox/shared/GUIDE.md"
+ln -s "$sandbox/shared/GUIDE.md" "$home/.config/opencode/AGENTS.md"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "link to the other guide kept" "$sandbox/shared/GUIDE.md" "$(link_target "$home/.config/opencode/AGENTS.md")"
+check "referent keeps its content" "1" "$(grep -c 'Shared team notes.' "$sandbox/shared/GUIDE.md")"
+check "referent gains the section" "1" "$(grep -c '^<DECENTLY-CAPABLE-POWERS>$' "$sandbox/shared/GUIDE.md")"
+rm -rf "$sandbox"
+
+echo "install.sh: OpenCode paths follow XDG_DATA_HOME and XDG_CONFIG_HOME"
+new_sandbox
+mkdir -p "$sandbox/xdg-data/opencode"
+: > "$sandbox/xdg-data/opencode/opencode.db"
+HOME="$home" XDG_DATA_HOME="$sandbox/xdg-data" XDG_CONFIG_HOME="$sandbox/xdg-config" "$install_sh" >/dev/null 2>&1
+check "use detected under XDG_DATA_HOME; link written under XDG_CONFIG_HOME" "$home/.claude/CLAUDE.md" \
+  "$(link_target "$sandbox/xdg-config/opencode/AGENTS.md")"
+check "nothing written to the default config path" "0" \
+  "$([ -e "$home/.config/opencode/AGENTS.md" ] || [ -L "$home/.config/opencode/AGENTS.md" ] && echo 1 || echo 0)"
 rm -rf "$sandbox"
 
 echo "install.sh: links every skill into repeated --config-dir targets, including paths with spaces"
