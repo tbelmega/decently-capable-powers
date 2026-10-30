@@ -32,13 +32,12 @@ essences are always in context. Final handoffs of distinct bodies of work end wi
 receipt - work status, verification, independent review, and next step/options - so
 completion state and the available exits are visible across harnesses without scrolling.
 
-**`skills/` - ten, loaded on demand.** Each addresses a documented risk or an explicit maintainer discipline:
+**`skills/` - nine, loaded on demand.** Each addresses a documented risk or an explicit maintainer discipline:
 
 | Skill | Counters |
 |-------|----------|
 | brainstorming | building before the problem is understood and the design agreed |
 | research | planning against code the agent only knows by name |
-| test-driven-development | implementation-first work, mock-heavy tests |
 | systematic-debugging | patching symptoms; not stepping back after repeated failures |
 | verification-before-completion | unverified - or gamed - success claims |
 | receiving-code-review | sycophantic caving to feedback; patching a finding's location, not its pattern |

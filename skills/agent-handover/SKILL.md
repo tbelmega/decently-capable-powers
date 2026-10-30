@@ -33,8 +33,8 @@ Objective: <what the next agent accomplishes now>
 Current state: <done / remaining>
 Source of truth: <files to trust first>
 Next step: <first concrete action>
-Constraints and risks: <working agreements that must hold: TDD on/off, isolation,
-  verify commands, scope; known traps and failed approaches>
+Constraints and risks: <working agreements that must hold: isolation, verify
+  commands, scope; known traps and failed approaches>
 Unpersisted context: <facts or decisions that exist only in this conversation>
 ```
 

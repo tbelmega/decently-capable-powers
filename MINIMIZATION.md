@@ -64,7 +64,12 @@ and doesn't exist natively. The browser-based *visual companion* server was drop
 machinery, off-thesis). Trimming the skill prose is **deferred** - kept in original form for now,
 pending review.
 
-### test-driven-development - KEEP (content changes deferred)
+### test-driven-development - KEEP (content changes deferred); DROPPED 2026-10-30
+
+Later ruling: the 2026-10 instruction diet dropped this skill. Current models write tests
+readily; what stays is the test-integrity rule and one line in `AGENTS.md`: watch a new test
+fail before the change makes it pass, and use TDD when asked.
+
 The distinctive content is the **Iron Law** ("no production code without a failing test first;
 if you wrote code first, *delete it*") and the long rationalization table that pre-empts every
 excuse an agent invents to skip it. This is genuinely behavior-shaping: models default to
@@ -214,7 +219,7 @@ test/platform drops.
 |---|---|
 | brainstorming (dialogue + gate) | **KEEP** (trim deferred) |
 | brainstorming visual companion server | **DROP** |
-| test-driven-development | **KEEP** (content changes deferred) |
+| test-driven-development | **KEEP** (content changes deferred); dropped 2026-10-30 |
 | systematic-debugging | **KEEP** |
 | verification-before-completion | **KEEP** |
 | receiving-code-review | **KEEP** |

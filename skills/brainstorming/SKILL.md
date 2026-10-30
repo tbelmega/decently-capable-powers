@@ -207,7 +207,6 @@ handoff, or in a different harness) still carries the agreed working decisions a
 
 ```md
 ## Implementation guidance
-- TDD: <on/off and scope, as agreed with the user>
 - Isolation: <worktree / branch / current checkout, as agreed>
 - Verify: run <project's typecheck+test commands> before claiming any task done
 - Review: <once after every task in this spec is complete and final verification passes;

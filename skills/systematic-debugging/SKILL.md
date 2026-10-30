@@ -43,7 +43,7 @@ top. Don't understand something? Say so and investigate; don't pretend.
 
 ## Phase 4 - Implementation
 
-1. Create the failing test case first (the test-driven-development skill applies).
+1. Create the failing test case first, and watch it fail for the reason you diagnosed.
 2. Implement one fix, addressing the root cause. No "while I'm here" improvements.
 3. Verify: test passes, no other tests broken, original symptom gone.
 
