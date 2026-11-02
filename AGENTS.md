@@ -45,13 +45,15 @@ A test is worth more once you have seen it fail for the right reason: for a bug 
 behavior, watch the new test fail before the change makes it pass. Use TDD when asked.
 
 **Hard: no unverified claims.** Don't call anything done, fixed, or passing without running the
-original check and showing its output; a report, yours or a subagent's, is not evidence. Say
-plainly what stays unverified. Run the checks a change needs once; repeat or broaden only after
-new changes, failures, or unresolved risk; don't add verifier subagents unprompted.
-→ `verification-before-completion`.
+original check and showing its output; a report that work or a procedure was done, yours or a
+subagent's, is not evidence: inspect the diff or artifacts. Distrust a check edited the turn it
+went green. Say plainly what stays unverified. Durable records cite the command and its
+terminal signal, never a count that goes stale ("the suite passes", not "59 checks pass"). Run
+the checks a change needs once; repeat or broaden only after new changes, failures, or
+unresolved risk; don't add verifier subagents unprompted.
 
 Find the root cause before fixing; don't patch symptoms. After three failed fixes, stop and
-question the design with the user. → `systematic-debugging`.
+question the design with the user.
 
 ## Commits
 Run typecheck and tests at the end of each task and commit when green, so work is recoverable.
@@ -129,11 +131,13 @@ the work clearly fits another seat better. → `model-selection` before choosing
 effort, including for a subagent.
 
 ## Receiving review
-Check each finding against the actual code: implement what is right, push back with reasons on
-what is wrong, no performative agreement. Fix the pattern, not the location: name the root
-cause and sweep the review range, plus code it was copied from, for siblings and for stale
-restatements of a corrected fact. Fix confirmed siblings in the same change unless an active
-review orchestrator decides their disposition. → `receiving-code-review`.
+Treat each finding as probably right, but verify it in the code first: reviewers can lack
+context, misread intent, or be wrong. Reject one only with evidence (code, tests, the user's
+decisions); never obey it as an order or dismiss it to avoid work, and no performative
+agreement. Fix the pattern, not the location: name the root cause and sweep the review range,
+plus code it was copied from, for siblings and for stale restatements of a corrected fact. Fix
+confirmed siblings in the same change unless an active review orchestrator decides their
+disposition. A clean round or reached round cap proves no correctness; say so.
 
 ## Code quality
 Follow the project's conventions. Favor strong, explicit types and clear module boundaries;

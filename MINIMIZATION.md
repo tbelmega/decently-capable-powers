@@ -84,7 +84,7 @@ test-first. The fork's `main` also carries valuable additions (mock-only-at-boun
 refactoring-excluded-from-test-first, integration-first) - see the 2026-07-02 research note.
 Porting those and trimming padding are deferred.
 
-### systematic-debugging - KEEP
+### systematic-debugging - KEEP; DROPPED 2026-11-02
 Two ideas here are worth their weight: "**no fixes without root-cause investigation first**"
 (counters the model's instinct to patch the symptom) and the **Phase 4.5 escalation** ("3+
 failed fixes means the architecture is wrong - stop iterating, step back"). Both are real
@@ -99,7 +99,15 @@ as one line in the skill. Defense-in-depth's "validate at every layer" contradic
 smallest-change rule, and the waiting example imported a foreign project; the "wait on
 conditions, not sleeps" rule moved to coding-standards' Tests section.
 
-### verification-before-completion - KEEP
+Later ruling (2026-11-02): dropped together with verification-before-completion and
+receiving-code-review. All three encode generic behavior current models do unprompted, and a
+session audit found them loaded in almost none of the sessions where they applied. What was
+specific to this project moved into `AGENTS.md`: root cause before fixing and the three-failure
+stop here; report-is-not-evidence, re-examining a check changed in the turn it went green, and
+citing commands instead of counts for verification; probably-right-but-verify, the sibling
+sweep, and clean-round-proves-nothing for review.
+
+### verification-before-completion - KEEP; DROPPED 2026-11-02
 Cheapest, highest-leverage keeper: pure discipline, zero machinery. "No completion claims
 without fresh verification evidence" directly targets the model's optimism bias - the "should
 pass," "seems to work," "this fixes it" reflex. Nothing native enforces this. A page of text
@@ -110,7 +118,9 @@ with "say plainly what stays unverified", because the ban pushed models to drop 
 uncertainty. The receipt now lives only in `AGENTS.md`; the skill keeps the claims table, the
 evidence-integrity checks and one example.
 
-### receiving-code-review - KEEP
+Later ruling (2026-11-02): dropped; see systematic-debugging above.
+
+### receiving-code-review - KEEP; DROPPED 2026-11-02
 Low redundancy, and it counters a specific model failure mode native harnesses *don't* address:
 sycophancy. It bans performative agreement ("You're absolutely right!"), requires restating and
 verifying each point against the actual codebase, and legitimizes technical pushback when a
@@ -119,6 +129,8 @@ reviewer is wrong. As models get more agreeable this gets *more* useful, not les
 Later ruling: the 2026-10 instruction diet scoped "if any item is unclear, stop" to cases where
 someone can answer, since it stalled unattended review loops, and dropped the implementation
 ordering models apply natively.
+
+Later ruling (2026-11-02): dropped; see systematic-debugging above.
 
 ### coding-standards - KEEP (added from fork main)
 Code-quality / typing / documentation discipline authored on the fork: strong explicit types, no
@@ -247,9 +259,9 @@ test/platform drops.
 | brainstorming (dialogue + gate) | **KEEP** (trim deferred) |
 | brainstorming visual companion server | **DROP** |
 | test-driven-development | **KEEP** (content changes deferred); dropped 2026-10-30 |
-| systematic-debugging | **KEEP** |
-| verification-before-completion | **KEEP** |
-| receiving-code-review | **KEEP** |
+| systematic-debugging | **KEEP**; dropped 2026-11-02 |
+| verification-before-completion | **KEEP**; dropped 2026-11-02 |
+| receiving-code-review | **KEEP**; dropped 2026-11-02 |
 | coding-standards | **KEEP** (added from main) |
 | research | **KEEP** (added from main) |
 | using-superpowers (bootstrap) | **DROP** (→ AGENTS.md) |

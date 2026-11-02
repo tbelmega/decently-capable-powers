@@ -5,7 +5,9 @@
 #   - Symlinks each skills/<name>/ into ~/.claude/skills/ (read by Claude Code
 #     and Cursor) and ~/.agents/skills/ (read by Codex, Cursor, and Grok Build).
 #     Cursor and Grok Build read both trees; identical names resolve to
-#     identical content, so the overlap is harmless.
+#     identical content, so the overlap is harmless. A link left behind by a
+#     skill since deleted from this repo (it points into this checkout's skills/
+#     at a name that no longer exists) is removed; every other entry stays.
 #   - Refreshes the operating-guide section (a <DECENTLY-CAPABLE-POWERS> tag pair
 #     inside the shared <GENERATED> wrapper) in ~/.claude/CLAUDE.md (Claude Code)
 #     and ~/.codex/AGENTS.md (Codex), migrating legacy DCP:START/END markers.
@@ -147,7 +149,20 @@ $identity"
 link_skills() {
   local target_root="$1"
   mkdir -p "$target_root"
-  local linked=0 repaired=0 current=0
+  local linked=0 repaired=0 current=0 removed=0 entry destination
+  # A skill deleted from this repo leaves its links behind on every earlier install. Only a
+  # dangling link whose target is this checkout's skills/<name> proves the skill was ours:
+  # links elsewhere may belong to another project installing into the same directory, and
+  # a dangling link elsewhere is --repair-links' business, so both stay.
+  for entry in "$target_root"/*; do
+    [ -L "$entry" ] && [ ! -e "$entry" ] || continue
+    destination="$(link_destination "$entry")"
+    [ "$(canonical_dir "$(dirname "$destination")")" = "$(canonical_dir "$REPO_DIR/skills")" ] || continue
+    if [ -e "$REPO_DIR/skills/$(basename "$destination")" ] || [ -L "$REPO_DIR/skills/$(basename "$destination")" ]; then continue; fi
+    rm -f "$entry"
+    echo "  - $entry removed (its skill no longer exists in this repo)"
+    removed=$((removed + 1))
+  done
   for skill_dir in "$REPO_DIR"/skills/*/; do
     local name link previous state
     name="$(basename "$skill_dir")"
@@ -191,7 +206,7 @@ link_skills() {
       linked=$((linked + 1))
     fi
   done
-  echo "  $target_root: $linked newly linked, $repaired repaired, $current already current"
+  echo "  $target_root: $linked newly linked, $repaired repaired, $current already current, $removed removed"
 }
 
 # Seed gitignored personal config: for every skills/*/<base>.template.md,

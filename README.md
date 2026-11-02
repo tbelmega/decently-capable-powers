@@ -32,15 +32,12 @@ essences are always in context. Final handoffs of distinct bodies of work end wi
 receipt - work status, verification, independent review, and next step/options - so
 completion state and the available exits are visible across harnesses without scrolling.
 
-**`skills/` - nine, loaded on demand.** Each addresses a documented risk or an explicit maintainer discipline:
+**`skills/` - six, loaded on demand.** Each addresses a documented risk or an explicit maintainer discipline:
 
 | Skill | Counters |
 |-------|----------|
 | brainstorming | building before the problem is understood and the design agreed |
 | research | planning against code the agent only knows by name |
-| systematic-debugging | patching symptoms; not stepping back after repeated failures |
-| verification-before-completion | unverified - or gamed - success claims |
-| receiving-code-review | sycophantic caving to feedback; patching a finding's location, not its pattern |
 | coding-standards | type/naming/abstraction drift |
 | model-selection | wrong model or reasoning effort for the task |
 | agent-handover | context rot; dead ends at usage limits |
@@ -88,6 +85,10 @@ verdict - a directory on its path denies search permission, its symlink chain lo
 runs past 64 hops. `test -e` cannot tell those apart from dangling, but the content behind them may
 be perfectly alive, so the run names the cause and leaves that link as it is; every other link in
 the same run whose target is provably gone is still repaired.
+
+A skill deleted from this repo would otherwise leave its links dangling on every existing install.
+A run removes a link only when its target is this checkout's `skills/<name>` and that directory no
+longer exists; real directories, live links, and links into any other repo are never touched.
 
 `./tests/install.test.sh` covers the argument surface and both linking behaviors against a
 disposable fixture.

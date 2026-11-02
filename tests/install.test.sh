@@ -264,6 +264,32 @@ case "$out" in *"was dangling: $sandbox/gone/skills/brainstorming"*)
 check "no dangling links remain" "0" "$(count_dangling "$profile/skills")"
 rm -rf "$sandbox"
 
+# Deleting a skill from the repo leaves its links behind in every directory an earlier
+# run installed into. Only a link into this checkout's skills/ proves the skill was ours;
+# a sibling project may install its own skills into the same directory.
+echo "install.sh: removes links to skills deleted from this repo, nothing else"
+new_sandbox
+profile="$home/.claude-prune"
+mkdir -p "$profile/skills/hand-made" "$home/.claude/skills" "$sandbox/sibling/skills/their-skill"
+ln -s "$fixture/skills/retired-skill" "$profile/skills/retired-skill"            # ours, deleted
+ln -s "$fixture/skills/retired-skill" "$home/.claude/skills/retired-skill"
+ln -s "$sandbox/sibling/skills/their-skill" "$profile/skills/their-skill"        # live, elsewhere
+ln -s "$sandbox/sibling/skills/their-gone" "$profile/skills/their-gone"          # dangling, elsewhere
+ln -s "$fixture/skills/research" "$profile/skills/research"                      # ours, live
+out="$(HOME="$home" "$install_sh" --config-dir "$profile" 2>&1)"
+check "run exits 0" "0" "$?"
+check "dangling link into this repo removed from the profile" "0" \
+  "$([ -L "$profile/skills/retired-skill" ] && echo 1 || echo 0)"
+check "dangling link into this repo removed from a default target" "0" \
+  "$([ -L "$home/.claude/skills/retired-skill" ] && echo 1 || echo 0)"
+case "$out" in *"$profile/skills/retired-skill"*"removed"*) ok "removal is reported";;
+  *) fail "removal was not reported - got: $out";; esac
+check "live link elsewhere kept" "$sandbox/sibling/skills/their-skill" "$(link_target "$profile/skills/their-skill")"
+check "dangling link elsewhere kept" "$sandbox/sibling/skills/their-gone" "$(link_target "$profile/skills/their-gone")"
+check "real directory kept" "1" "$([ -d "$profile/skills/hand-made" ] && [ ! -L "$profile/skills/hand-made" ] && echo 1 || echo 0)"
+check "live skill link kept" "$fixture/skills/research" "$(link_target "$profile/skills/research")"
+rm -rf "$sandbox"
+
 # A link whose target sits behind a directory that denies search is indistinguishable from
 # a dangling one by `test -e`, but its content may be perfectly alive. Repairing it would
 # discard the only record of the destination, so it must survive even --repair-links.
