@@ -1,9 +1,7 @@
 # Kotlin - stack rules
 
 <!-- Published base, loaded for Kotlin projects. Personal additions/overrides go in
-     stacks/kotlin.local.md (gitignored, optional; wins over this file on conflict).
-     Drafted by an agent 2026-07-04 mirroring the TypeScript base; reviewed and approved
-     by the maintainer 2026-08-29, so these are held standards rather than a draft. -->
+     stacks/kotlin.local.md (gitignored, optional; wins over this file on conflict). -->
 
 ## Type safety
 

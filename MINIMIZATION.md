@@ -64,6 +64,12 @@ and doesn't exist natively. The browser-based *visual companion* server was drop
 machinery, off-thesis). Trimming the skill prose is **deferred** - kept in original form for now,
 pending review.
 
+Later ruling: the 2026-10 instruction diet trimmed the prose. Each scope rule (new capability
+versus iteration, the no-extra-effort rule for deferred scope, the review-layout's
+finalization-only use) is now stated once, and finalization became a numbered checklist; the
+safeguards (the approval gate, [added] tags, revision re-approval, the deferred-scope ledger)
+are unchanged.
+
 ### test-driven-development - KEEP (content changes deferred); DROPPED 2026-10-30
 
 Later ruling: the 2026-10 instruction diet dropped this skill. Current models write tests
@@ -86,11 +92,23 @@ anti-patterns that strong models still fall into under pressure. `find-polluter.
 bisection) is a nice self-contained tool. The skill-eval fixtures that rode along in this folder
 (`test-pressure-*.md`, `test-academic.md`, `CREATION-LOG.md`) were dropped with the eval mechanism.
 
+Later ruling: the 2026-10 instruction diet dropped the reference files `root-cause-tracing.md`,
+`defense-in-depth.md`, `condition-based-waiting.md` and its example `.ts`, plus the Iron Law
+banner and the excuse table. Models trace call chains natively; the tracing technique survives
+as one line in the skill. Defense-in-depth's "validate at every layer" contradicted the
+smallest-change rule, and the waiting example imported a foreign project; the "wait on
+conditions, not sleeps" rule moved to coding-standards' Tests section.
+
 ### verification-before-completion - KEEP
 Cheapest, highest-leverage keeper: pure discipline, zero machinery. "No completion claims
 without fresh verification evidence" directly targets the model's optimism bias - the "should
 pass," "seems to work," "this fixes it" reflex. Nothing native enforces this. A page of text
 that measurably reduces false "done" claims is a bargain.
+
+Later ruling: the 2026-10 instruction diet replaced the ban on "should", "seems" and "probably"
+with "say plainly what stays unverified", because the ban pushed models to drop honest
+uncertainty. The receipt now lives only in `AGENTS.md`; the skill keeps the claims table, the
+evidence-integrity checks and one example.
 
 ### receiving-code-review - KEEP
 Low redundancy, and it counters a specific model failure mode native harnesses *don't* address:
@@ -98,11 +116,20 @@ sycophancy. It bans performative agreement ("You're absolutely right!"), require
 verifying each point against the actual codebase, and legitimizes technical pushback when a
 reviewer is wrong. As models get more agreeable this gets *more* useful, not less.
 
+Later ruling: the 2026-10 instruction diet scoped "if any item is unclear, stop" to cases where
+someone can answer, since it stalled unattended review loops, and dropped the implementation
+ordering models apply natively.
+
 ### coding-standards - KEEP (added from fork main)
 Code-quality / typing / documentation discipline authored on the fork: strong explicit types, no
 `any`/casts, boundary type-sync, cross-service type sharing, `if (value)` truthiness
 normalization, and rules for evolving persisted & API-facing types. Not in obra. Review/rethink
 pending.
+
+The Kotlin stack base was drafted by an agent on 2026-07-04 mirroring the TypeScript base and
+approved by the maintainer on 2026-08-29, so it holds standards, not a draft. The 2026-10
+instruction diet added a short Tests section (the test-quality residue of the dropped TDD
+skill) and allowed common abbreviations such as `id` and `url`.
 
 ### research - KEEP (added from fork main)
 A deep-read workflow for mapping how a codebase/system/feature actually works before planning,

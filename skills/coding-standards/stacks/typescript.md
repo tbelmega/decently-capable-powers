@@ -5,10 +5,8 @@
 
 ## Type safety
 
-- **Strict null checks** - Use non-nullable types by default. At boundaries, normalize optional
-  fields so **presence** is checked with **`if (value)`** where that matches the domain (see
-  **Truthiness and empty optional values** below); use explicit `null` / `undefined` checks only
-  when the domain requires it (e.g. PATCH, or valid `0` / `""`).
+- **Strict null checks** - Use non-nullable types by default; normalize optional fields at
+  boundaries (see **Truthiness and empty optional values** below).
 - **No `any`, no non-null assertions, no unchecked type casts.**
 - Make use of generic types, union types and branded strings to strengthen typing.
 - Aim for cross-service type safety, e.g. sharing the same type files between frontend and

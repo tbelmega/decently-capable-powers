@@ -5,52 +5,29 @@ description: Use when receiving code review feedback, before implementing sugges
 
 # Receiving Code Review
 
-Code review requires technical evaluation, not emotional performance.
+Review feedback gets technical evaluation, not emotional performance: read all of it, restate
+each requirement, verify each claim against the actual codebase, then respond with a technical
+acknowledgment or reasoned pushback, and implement one item at a time, testing each.
 
-**Core principle:** Verify before implementing. Ask before assuming.
-
-## The Response Pattern
-
-1. **Read** the complete feedback without reacting
-2. **Understand** - restate each requirement in your own words, or ask
-3. **Verify** - check each claim against the actual codebase
-4. **Evaluate** - technically sound for THIS codebase?
-5. **Respond** - technical acknowledgment or reasoned pushback
-6. **Implement** - one item at a time, test each
-
-## Banned Responses
-
-- "You're absolutely right!" / "Great point!" - performative agreement
-- Any gratitude expression - the fix itself shows you heard the feedback
-- "Let me implement that now" - before verifying the claim
-
-Instead: restate the requirement, ask the clarifying question, push back with technical
-reasoning, or just make the fix and show it.
+No performative agreement ("You're absolutely right!", "Great point!"), no thanks, no "let me
+implement that now" before verifying. Restate, ask, push back, or just make the fix and show it.
 
 ## Unclear Feedback
 
-If any item is unclear, stop; don't implement the clear ones yet. Items may be related, and
-partial understanding produces wrong implementations.
+Where someone can answer, clarify unclear items before implementing any: items may be related,
+and partial understanding produces wrong implementations ("I understand 1, 2, 3 and 6; I need
+clarification on 4 and 5."). With no one to ask, disposition the unclear item per the active
+review orchestrator, stating your reading of it.
 
-> "I understand items 1, 2, 3, 6. Need clarification on 4 and 5 before proceeding."
+## Evaluating Feedback
 
-## Evaluating External Feedback
+Is it correct for this codebase? Does it break existing behavior? Is there a reason the code is
+the way it is? Does the reviewer have full context?
 
-Before implementing, check: Is it technically correct for this codebase? Does it break existing
-functionality? Is there a reason the current implementation is the way it is? Does the reviewer
-have full context?
-
-- **Suggestion seems wrong** → push back with technical reasoning, not defensiveness. Reference
-  working tests and code.
-- **Can't verify** → say so: "I can't verify this without X. Investigate, ask, or proceed?"
-- **Conflicts with the user's prior decisions** → stop and discuss with the user first.
-- **Reviewer proposes "implementing X properly"** → grep for actual usage first. Unused?
-  Suggest removal (YAGNI) instead of building it out.
-
-## Implementation Order
-
-Clarify everything first, then: blocking issues (breakage, security) → simple fixes → complex
-fixes. Test each individually; verify no regressions.
+- **Wrong:** push back with technical reasoning, citing working tests and code.
+- **Can't verify:** say so: "I can't verify this without X. Investigate, ask, or proceed?"
+- **Conflicts with the user's prior decisions:** discuss with the user first.
+- **"Implement X properly":** grep for actual usage first; if unused, suggest removal instead.
 
 ## Fix the Pattern, Not the Location
 
@@ -72,14 +49,14 @@ tests or the inventory grow: "the suite passes" survives, "59 checks pass" does 
 
 ## What a Clean Round Does Not Prove
 
-A reviewer reporting complete file coverage has not certified that the defects are all found -
+A reviewer reporting complete file coverage has not certified that the defects are all found:
 a clean round means that pass produced no finding. The round cap bounds cost; it does not
 demonstrate convergence. Report either as what it is, never as "the code is now correct".
 
-## When You Pushed Back and Were Wrong
+## When Your Pushback Was Wrong
 
-State the correction factually and move on: "Verified, you're right: X does Y. Fixing."
-No long apology, no defending the original pushback.
+State the correction factually and move on: "Verified, you're right: X does Y. Fixing." No long
+apology, no defending the original pushback.
 
 ## GitHub Thread Replies
 

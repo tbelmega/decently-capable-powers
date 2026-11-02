@@ -45,29 +45,28 @@ accident.
 
 ## Comments and Documentation
 
-### When to Comment
+Comment why the code exists and what is non-obvious (business rules, edge cases, workarounds,
+algorithms), not what the code or its types already say.
 
-- **Explain purpose** - Why the code exists, not what it does
-- **Provide context** - Business logic, edge cases, or non-obvious behavior
-- **Document complexity** - Algorithms, workarounds, or non-standard patterns
-- **Clarify intent** - When the code might be misunderstood
+**Don't anchor comments to the work that produced them.** Specs, plans, tickets, prompts, review
+findings, phase and task numbers are transient; a reader a year from now cannot resolve them,
+and the comment outlives them. State the constraint itself, not its provenance. A durable
+external reference (upstream bug, RFC, standard) is fine when it explains behavior the code
+cannot.
 
-### When NOT to Comment
+## Tests
 
-- **Don't state the obvious** - Avoid comments that just restate what the code clearly shows
-- **Don't repeat function/variable names** - Function names should be self-documenting
-- **Don't repeat type information** - Doc comments should not duplicate what the type
-  signature already says
-- **Don't document trivial logic** - Simple, straightforward code doesn't need comments
-- **Don't anchor comments to the work that produced them** - Specs, plans, tickets, prompts,
-  review findings, phase and task numbers are transient; a reader a year from now cannot
-  resolve them, and the comment outlives them. State the constraint itself, not its
-  provenance. A durable external reference (upstream bug, RFC, standard) is fine when it
-  explains behavior the code cannot.
+- Mock only at system boundaries; prefer integration-style tests through real collaborators.
+- Hardcode expected results; never recompute them with the production logic under test.
+- No test-only methods or branches in production code.
+- Make time, randomness and generated IDs injectable where a test needs to control them.
+- Wait on conditions, not fixed sleeps, and treat a flaky test as a bug.
+- Refactoring already-tested code needs no new tests: run the existing ones before and after.
 
 ## Naming Conventions
 
-- **Self-documenting names** - Names should convey purpose; no abbreviations or acronyms
+- **Self-documenting names** - Names should convey purpose; no unclear abbreviations (common
+  ones such as `id`, `url`, `http` are fine)
 - **Consistent style** - Follow existing codebase conventions (camelCase, PascalCase, etc.)
 - **Avoid generic names** - `data`, `info`, `handler` only when context makes them clear.
   **Never** `helper` or `manager`.
