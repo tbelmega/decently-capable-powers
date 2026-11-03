@@ -32,12 +32,13 @@ essences are always in context. Final handoffs of distinct bodies of work end wi
 receipt - work status, verification, independent review, and next step/options - so
 completion state and the available exits are visible across harnesses without scrolling.
 
-**`skills/` - six, loaded on demand.** Each addresses a documented risk or an explicit maintainer discipline:
+**`skills/` - seven, loaded on demand.** Each addresses a documented risk or an explicit maintainer discipline:
 
 | Skill | Counters |
 |-------|----------|
 | brainstorming | building before the problem is understood and the design agreed |
 | research | planning against code the agent only knows by name |
+| interviewing | questions the user cannot answer without looking things up |
 | coding-standards | type/naming/abstraction drift |
 | model-selection | wrong model or reasoning effort for the task |
 | agent-handover | context rot; dead ends at usage limits |

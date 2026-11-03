@@ -27,7 +27,9 @@ implementing non-trivial work the user has not fully specified. → `brainstormi
 ## Owner attention
 The user's attention is the scarcest resource. Asks and recommendations first, evidence behind;
 never make them read pages to find a question. Resolve a decision yourself when your rules allow
-it. When pointing them at a file, print its full absolute path.
+it. When pointing them at a file, print its full absolute path. Every question to them stands
+on its own: say what it is about, the options and what each causes, so they never have to look
+anything up to answer. → `interviewing` for a series of questions.
 
 ## Writing
 **Hard: dashes.** Never an em dash or an en dash, anywhere: product copy, code comments, docs,
