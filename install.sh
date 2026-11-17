@@ -46,6 +46,12 @@
 #   <dir>/CLAUDE.md imports it - for repos that want checked-in, team-visible
 #   guidance instead of (or on top of) the user-level install.
 #
+# --uninstall: remove what an install wrote, and nothing else - links into this
+#   checkout's skills/, the managed section (plus its wrapper and heading when nothing
+#   else is left in them), the Cursor rule and Kiro steering file, and the OpenCode link.
+#   Pass the same --config-dir values the install used; `--uninstall --project <dir>`
+#   undoes a project install. Malformed tags leave that file untouched and reported.
+#
 # Idempotent - re-run after every change to this repo. Update = git pull + re-run.
 # Load paths verified against official harness docs through 2026-09-21
 # (ASSUMPTIONS.md A2/A3/A20/A26/A27); the self-update skill re-verifies them.
@@ -260,51 +266,13 @@ resolve_target() {
   printf '%s\n' "$t"
 }
 
-# Upsert the guide section into $1's <GENERATED> wrapper: replace an existing
-# section in place, insert a missing one into the wrapper (created if absent), and
-# migrate a legacy DCP:START/END block into the tag grammar. Sibling sections and
-# everything outside the tags are preserved byte for byte, line endings and a
-# missing final newline included; the one deliberate write outside the tags is the
-# separator added when appending to a file that never carried the guide. Malformed
-# or ambiguous tags - an orphan tag at either level, a section outside the wrapper,
-# duplicated markers - skip the file with a report; the run continues for the other
-# targets. A symlinked target has its referent edited in place. Reads $GUIDE_BLOCK,
-# the section extracted and validated before any target was touched.
-#
-# Accepted limitation (owner ruling 2026-08-23): this read-modify-write is not
-# serialized against the DCL seeder, so two installers run concurrently on the same
-# file can drop each other's freshly written section - last writer wins. The window
-# is sub-second, both runs are hand-started by the same user, the fail-closed parser
-# keeps the surviving file well-formed, and re-running the losing installer restores
-# its section. A locking protocol was tried and reverted: its own failure modes
-# reviewed worse than the race.
-refresh_block() {
-  local target="$1" resolved
-  if ! resolved="$(resolve_target "$target")"; then
-    echo "  ! $target: symlink chain exceeds $LINK_HOP_LIMIT hops - left untouched"
-    return 0
-  fi
-  mkdir -p "$(dirname "$resolved")"
-  local block tmp status hadnl
-  block="$GUIDE_BLOCK"
-  if [ ! -f "$resolved" ]; then
-    {
-      echo "# Operating guide"
-      echo "$GEN_OPEN"
-      cat "$block"
-      echo "$GEN_CLOSE"
-    } > "$resolved"
-    echo "  created managed section in $target"
-    return 0
-  fi
-  # Replacement is staged beside the referent so the final mv is an atomic rename on
-  # the same filesystem, never a copy-and-delete across TMPDIR.
-  tmp="$(mktemp "$(dirname "$resolved")/.dcp-refresh.XXXXXX")"
-  hadnl=1
-  if [ -s "$resolved" ] && [ -n "$(tail -c1 "$resolved")" ]; then hadnl=0; fi
-  status=0
-  awk -v go="$GEN_OPEN" -v gc="$GEN_CLOSE" -v so="$SEC_OPEN" -v sc="$SEC_CLOSE" \
-      -v ls="$LEGACY_START_LINE" -v le="$LEGACY_END_LINE" -v bf="$block" -v hadnl="$hadnl" '
+# The section rewrite both install and uninstall run, as one awk program so the two can
+# never disagree about which tags are well formed. `mode` is "refresh" (upsert the section
+# read from `bf`) or "remove" (drop the section and any legacy block, then the wrapper when
+# nothing else is left in it). Exit 3 with "SKIP <reason>" on stderr means malformed or
+# ambiguous tags; exit 4 means remove found nothing to remove; otherwise stderr carries the
+# verdict and stdout the new content (none for EMPTIED).
+BLOCK_AWK='
     function trim(s) { sub(/^[ \t\r]+/, "", s); sub(/[ \t\r]+$/, "", s); return s }
     function skip(reason) { print "SKIP " reason > "/dev/stderr"; exit 3 }
     function emit(s) { out[++m] = s }
@@ -356,6 +324,33 @@ refresh_block() {
         skip("unmatched, duplicated, or reversed legacy DCP markers")
       if (!lstarts) { lO = 0; lC = 0 }
 
+      if (mode == "remove") {
+        if (!sO && !lO) { print "ABSENT" > "/dev/stderr"; exit 4 }
+        for (i = sO; sO && i <= sC; i++) drop[i] = 1
+        for (i = lO; lO && i <= lC; i++) drop[i] = 1
+        if (gpairs == 1) {
+          # A wrapper left holding nothing but blank lines belonged to this installer alone; it
+          # goes, with the heading this installer writes above a wrapper it creates and
+          # the blank separator it writes above that heading.
+          empty = 1
+          for (i = gO + 1; i < gC; i++) if (!drop[i] && trim(line[i]) != "") { empty = 0; break }
+          if (empty) {
+            for (i = gO; i <= gC; i++) drop[i] = 1
+            h = gO - 1
+            if (h >= 1 && trim(line[h]) == "# Operating guide") {
+              drop[h] = 1
+              if (h > 1 && trim(line[h - 1]) == "") drop[h - 1] = 1
+            }
+          }
+        }
+        blank = 1
+        for (i = 1; i <= n; i++) if (!drop[i]) { emit(line[i]); if (trim(line[i]) != "") blank = 0 }
+        if (blank) { print "EMPTIED" > "/dev/stderr"; exit 0 }
+        for (j = 1; j <= m; j++) printf "%s%s", out[j], (j < m || hadnl) ? "\n" : ""
+        print "REMOVED" > "/dev/stderr"
+        exit 0
+      }
+
       endnl = hadnl
       if (gpairs == 1) {
         for (i = 1; i <= n; i++) {
@@ -382,19 +377,78 @@ refresh_block() {
       print verdict > "/dev/stderr"
       exit 0
     }
-  ' "$resolved" > "$tmp" 2> "$tmp.status" || status=$?
+  '
+
+# Upsert the guide section into $1's <GENERATED> wrapper: replace an existing
+# section in place, insert a missing one into the wrapper (created if absent), and
+# migrate a legacy DCP:START/END block into the tag grammar. Sibling sections and
+# everything outside the tags are preserved byte for byte, line endings and a
+# missing final newline included; the one deliberate write outside the tags is the
+# separator added when appending to a file that never carried the guide. Malformed
+# or ambiguous tags - an orphan tag at either level, a section outside the wrapper,
+# duplicated markers - skip the file with a report; the run continues for the other
+# targets. A symlinked target has its referent edited in place. Reads $GUIDE_BLOCK,
+# the section extracted and validated before any target was touched.
+#
+# Accepted limitation (owner ruling 2026-08-23): this read-modify-write is not
+# serialized against the DCL seeder, so two installers run concurrently on the same
+# file can drop each other's freshly written section - last writer wins. The window
+# is sub-second, both runs are hand-started by the same user, the fail-closed parser
+# keeps the surviving file well-formed, and re-running the losing installer restores
+# its section. A locking protocol was tried and reverted: its own failure modes
+# reviewed worse than the race.
+refresh_block() { rewrite_block "$1" refresh; }
+
+rewrite_block() {
+  local target="$1" mode="$2" resolved
+  if ! resolved="$(resolve_target "$target")"; then
+    echo "  ! $target: symlink chain exceeds $LINK_HOP_LIMIT hops - left untouched"
+    return 0
+  fi
+  local block tmp status hadnl
+  block="${GUIDE_BLOCK:-}"
+  if [ "$mode" = remove ] && [ ! -f "$resolved" ]; then return 0; fi
+  mkdir -p "$(dirname "$resolved")"
+  if [ ! -f "$resolved" ]; then
+    {
+      echo "# Operating guide"
+      echo "$GEN_OPEN"
+      cat "$block"
+      echo "$GEN_CLOSE"
+    } > "$resolved"
+    echo "  created managed section in $target"
+    return 0
+  fi
+  # Replacement is staged beside the referent so the final mv is an atomic rename on
+  # the same filesystem, never a copy-and-delete across TMPDIR.
+  tmp="$(mktemp "$(dirname "$resolved")/.dcp-refresh.XXXXXX")"
+  hadnl=1
+  if [ -s "$resolved" ] && [ -n "$(tail -c1 "$resolved")" ]; then hadnl=0; fi
+  status=0
+  awk -v mode="$mode" -v go="$GEN_OPEN" -v gc="$GEN_CLOSE" -v so="$SEC_OPEN" -v sc="$SEC_CLOSE" \
+      -v ls="$LEGACY_START_LINE" -v le="$LEGACY_END_LINE" -v bf="$block" -v hadnl="$hadnl" \
+      "$BLOCK_AWK" "$resolved" > "$tmp" 2> "$tmp.status" || status=$?
   if [ "$status" -eq 3 ]; then
     echo "  ! $target: $(sed 's/^SKIP //' "$tmp.status") - left untouched; fix the tags and re-run"
     rm -f "$tmp"
-  elif [ "$status" -ne 0 ]; then
-    echo "  ! $target: refresh failed (awk exit $status) - left untouched" >&2
+  elif [ "$status" -eq 4 ]; then
     rm -f "$tmp"
+  elif [ "$status" -ne 0 ]; then
+    echo "  ! $target: $mode failed (awk exit $status) - left untouched" >&2
+    rm -f "$tmp"
+  elif [ "$(cat "$tmp.status")" = EMPTIED ]; then
+    # Nothing but the guide was in the file. A symlinked one is a sharing arrangement
+    # someone made deliberately, so its referent is emptied rather than deleted.
+    rm -f "$tmp"
+    if [ -L "$target" ]; then : > "$resolved"; else rm -f "$resolved"; fi
+    echo "  removed $target (it held only the managed section)"
   else
     mv "$tmp" "$resolved"
     case "$(cat "$tmp.status")" in
       MIGRATED) echo "  migrated legacy markers to the managed section in $target" ;;
       REPLACED) echo "  refreshed managed section in $target" ;;
       APPENDED) echo "  appended managed section to $target" ;;
+      REMOVED) echo "  removed managed section from $target" ;;
     esac
   fi
   rm -f "$tmp.status"
@@ -487,7 +541,88 @@ project_install() {
   fi
 }
 
-USAGE='usage: install.sh [--config-dir <dir>]... [--repair-links] | --project <dir>'
+# Uninstall removes only what this installer wrote: links into this checkout's skills/
+# (live or dangling), the managed section in each guide file (and its wrapper and heading
+# when nothing else is left), the Cursor rule and Kiro steering file it owns, and the
+# OpenCode link it made. Other tools' sections, foreign links, and the gitignored
+# *.local.md files in this checkout stay.
+unlink_skills() {
+  local target_root="$1" removed=0 entry
+  [ -d "$target_root" ] || return 0
+  for entry in "$target_root"/*; do
+    [ -L "$entry" ] || continue
+    [ "$(canonical_dir "$(dirname "$(link_destination "$entry")")")" = "$(canonical_dir "$REPO_DIR/skills")" ] || continue
+    rm -f "$entry"
+    removed=$((removed + 1))
+  done
+  echo "  $target_root: $removed removed"
+}
+
+# A symlink at the owned path is a sharing arrangement someone made (install writes
+# through it), so neither the link nor its shared referent is this installer's to delete.
+remove_owned_guide() {
+  local target="$1" label="$2"
+  if [ -L "$target" ]; then
+    echo "  ! $label $target is a symlink to $(readlink "$target") - kept; remove the link or its content by hand"
+  elif [ -e "$target" ]; then
+    rm -f "$target"
+    echo "  $label removed: $target"
+  fi
+}
+
+# Runs before the Claude guide file is edited: a link DCP made to that file goes as a
+# link, and an AGENTS.md of OpenCode's own has the section removed like any guide file.
+unlink_opencode_guide() {
+  local target="${XDG_CONFIG_HOME:-$HOME/.config}/opencode/AGENTS.md"
+  if [ -L "$target" ] && [ "$(readlink "$target")" = "$HOME/.claude/CLAUDE.md" ]; then
+    rm -f "$target"
+    echo "  OpenCode guide link removed: $target"
+  elif [ -f "$target" ]; then
+    rewrite_block "$target" remove
+  fi
+}
+
+uninstall_user() {
+  local skill_target alt_profile
+  echo "Skills (removing links into this checkout):"
+  for skill_target in "$HOME/.claude/skills" "$HOME/.agents/skills" "$HOME/.kiro/skills" \
+      ${extra_config_dirs[@]+"${extra_config_dirs[@]/%//skills}"}; do
+    unlink_skills "$skill_target"
+  done
+  echo "Operating guide (removing the managed section):"
+  unlink_opencode_guide
+  rewrite_block "$HOME/.claude/CLAUDE.md" remove
+  for alt_profile in "$HOME"/.claude-*/; do
+    [ -d "$alt_profile" ] || continue
+    rewrite_block "${alt_profile%/}/CLAUDE.md" remove
+  done
+  rewrite_block "$HOME/.codex/AGENTS.md" remove
+  remove_owned_guide "$HOME/.cursor/rules/decently-capable-powers.mdc" "Cursor user rule"
+  remove_owned_guide "$HOME/.kiro/steering/decently-capable-powers.md" "Kiro steering file"
+  echo
+  echo "Done. Personal *.local.md files in $REPO_DIR/skills are left in place."
+}
+
+# The CLAUDE.md import goes only when the AGENTS.md it imports is gone; a CLAUDE.md left
+# with nothing but blank lines goes with it.
+project_uninstall() {
+  local dir="$1" rest
+  [ -d "$dir" ] || { echo "No such directory: $dir" >&2; exit 1; }
+  rewrite_block "$dir/AGENTS.md" remove
+  if [ ! -e "$dir/AGENTS.md" ] && [ -f "$dir/CLAUDE.md" ] && grep -qx '@AGENTS.md' "$dir/CLAUDE.md"; then
+    rest="$(grep -vx '@AGENTS.md' "$dir/CLAUDE.md" || true)"
+    if [ -z "$(printf '%s' "$rest" | tr -d '[:space:]')" ] && [ ! -L "$dir/CLAUDE.md" ]; then
+      rm -f "$dir/CLAUDE.md"
+      echo "  removed $dir/CLAUDE.md (it held only the @AGENTS.md import)"
+    else
+      printf '%s\n' "$rest" > "$dir/CLAUDE.md"
+      echo "  removed the @AGENTS.md import from $dir/CLAUDE.md"
+    fi
+  fi
+}
+
+USAGE='usage: install.sh [--config-dir <dir>]... [--repair-links] | --project <dir>
+       install.sh --uninstall [--config-dir <dir>]... | --uninstall --project <dir>'
 
 # Pull optional --config-dir values out of the args; everything else (notably
 # --project and its argument) passes through unchanged. The parallel boolean
@@ -496,11 +631,16 @@ USAGE='usage: install.sh [--config-dir <dir>]... [--repair-links] | --project <d
 extra_config_dirs=()
 have_extra_config_dirs=false
 repair_dangling=false
+uninstall=false
 passthrough_args=()
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --repair-links)
       repair_dangling=true
+      shift
+      ;;
+    --uninstall)
+      uninstall=true
       shift
       ;;
     --config-dir)
@@ -528,17 +668,32 @@ while [ "$#" -gt 0 ]; do
 done
 set -- ${passthrough_args[@]+"${passthrough_args[@]}"}
 
+if [ "$uninstall" = true ] && [ "$repair_dangling" = true ]; then
+  echo "--repair-links does nothing with --uninstall" >&2
+  echo "$USAGE" >&2
+  exit 1
+fi
+
 if [ "${1:-}" = "--project" ]; then
   if [ "$have_extra_config_dirs" = true ] || [ "$repair_dangling" = true ]; then
     echo "--config-dir and --repair-links belong to the user-level install and do nothing with --project" >&2
     echo "$USAGE" >&2
     exit 1
   fi
-  project_install "${2:?usage: install.sh --project <dir>}"
+  if [ "$uninstall" = true ]; then
+    project_uninstall "${2:?usage: install.sh --uninstall --project <dir>}"
+  else
+    project_install "${2:?usage: install.sh --project <dir>}"
+  fi
   exit 0
 elif [ "${1:-}" != "" ]; then
   echo "$USAGE" >&2
   exit 1
+fi
+
+if [ "$uninstall" = true ]; then
+  uninstall_user
+  exit 0
 fi
 
 # The guide source is validated before anything at all is created - even the write

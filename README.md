@@ -91,8 +91,16 @@ A skill deleted from this repo would otherwise leave its links dangling on every
 A run removes a link only when its target is this checkout's `skills/<name>` and that directory no
 longer exists; real directories, live links, and links into any other repo are never touched.
 
-`./tests/install.test.sh` covers the argument surface and both linking behaviors against a
-disposable fixture.
+**Uninstall:** `./install.sh --uninstall` removes what an install wrote and nothing else: links
+into this checkout's `skills/`, the managed section in each guide file (plus its `<GENERATED>`
+wrapper and heading when nothing else is left in them, and the file itself when it held only
+that), the Cursor rule, the Kiro steering file, and the OpenCode link. Pass the same
+`--config-dir` values the install used; `./install.sh --uninstall --project <dir>` undoes a
+project install. Other tools' sections, foreign links, and your `*.local.md` files stay, and a
+file with malformed tags is reported and left untouched.
+
+`./tests/install.test.sh` covers the argument surface, both linking behaviors, and uninstall
+against a disposable fixture.
 
 **One post-install step:** install.sh seeds `skills/model-selection/roster.local.md` from its
 template - edit it with your harnesses/subscriptions, model sweet spots, and standing

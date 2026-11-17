@@ -23,6 +23,8 @@ unset XDG_DATA_HOME XDG_CONFIG_HOME
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEST_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 failures=0
+# Byte-exact copy of the start marker the pre-tag installer wrote.
+LEGACY_START_FIXTURE='<!-- DCP:START — managed block; edit in the decently-capable-powers repo, then re-run install.sh -->'
 
 fail() { echo "  FAIL: $*"; failures=$((failures + 1)); }
 ok() { echo "  ok: $*"; }
@@ -667,6 +669,131 @@ case "$out" in *"no well-formed"*) ok "the source defect is named";; *) fail "so
 check "no guide was installed" "0" "$([ -f "$home/.claude/CLAUDE.md" ] && echo 1 || echo 0)"
 check "no skills were linked before validation" "0" "$([ -d "$home/.claude/skills" ] && echo 1 || echo 0)"
 check "no lock or temp litter beside the target" "0" "$(set -- "$home/.claude"/CLAUDE.md.lock "$home/.claude"/.dcp-refresh.*; [ -e "$1" ] || [ -e "$2" ] && echo 1 || echo 0)"
+rm -rf "$sandbox"
+
+echo "install.sh --uninstall: removes everything a default install wrote, and only that"
+new_sandbox
+mkdir -p "$home/.claude/skills" "$home/.claude-work" "$sandbox/elsewhere/foreign-skill"
+ln -s "$sandbox/elsewhere/foreign-skill" "$home/.claude/skills/foreign-skill"
+printf 'mine\n' > "$home/.claude/skills/plain-file"
+HOME="$home" "$install_sh" --config-dir "$sandbox/profile" >/dev/null 2>&1
+check "the install itself succeeded" "$skill_count" "$(count_links_into_fixture "$home/.claude/skills")"
+# A link into this checkout whose skill was since deleted is still ours to remove.
+ln -s "$fixture/skills/deleted-skill" "$home/.agents/skills/deleted-skill"
+out="$(HOME="$home" "$install_sh" --uninstall --config-dir "$sandbox/profile" 2>&1)"; status=$?
+check "uninstall exits 0" "0" "$status"
+for skills_dir in "$home/.claude/skills" "$home/.agents/skills" "$home/.kiro/skills" "$sandbox/profile/skills"; do
+  check "no links into the checkout left in $skills_dir" "0" "$(count_links_into_fixture "$skills_dir")"
+done
+check "the dangling link into the checkout is gone" "0" "$([ -L "$home/.agents/skills/deleted-skill" ] && echo 1 || echo 0)"
+check "a foreign skill link survives" "$sandbox/elsewhere/foreign-skill" "$(link_target "$home/.claude/skills/foreign-skill")"
+check "a plain file in a skills dir survives" "mine" "$(cat "$home/.claude/skills/plain-file")"
+check "a CLAUDE.md that held only the guide is removed" "0" "$([ -e "$home/.claude/CLAUDE.md" ] && echo 1 || echo 0)"
+check "an alternate profile's guide-only CLAUDE.md is removed" "0" "$([ -e "$home/.claude-work/CLAUDE.md" ] && echo 1 || echo 0)"
+check "the Codex guide-only AGENTS.md is removed" "0" "$([ -e "$home/.codex/AGENTS.md" ] && echo 1 || echo 0)"
+check "the Cursor rule is removed" "0" "$([ -e "$home/.cursor/rules/decently-capable-powers.mdc" ] && echo 1 || echo 0)"
+check "the Kiro steering file is removed" "0" "$([ -e "$home/.kiro/steering/decently-capable-powers.md" ] && echo 1 || echo 0)"
+check "skills directories themselves stay" "1" "$([ -d "$home/.claude/skills" ] && echo 1 || echo 0)"
+out="$(HOME="$home" "$install_sh" --uninstall --config-dir "$sandbox/profile" 2>&1)"; status=$?
+check "a second uninstall exits 0" "0" "$status"
+check "a second uninstall leaves the foreign link" "$sandbox/elsewhere/foreign-skill" "$(link_target "$home/.claude/skills/foreign-skill")"
+rm -rf "$sandbox"
+
+echo "install.sh --uninstall: keeps the user's content and other tools' sections byte for byte"
+new_sandbox
+mkdir -p "$home/.claude" "$home/.codex"
+printf '# Mine\nkeep this\n' > "$home/.claude/CLAUDE.md"
+printf '# Codex rules\n' > "$home/.codex/AGENTS.md"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+# Another tool's section shares the wrapper in the Codex file.
+awk '{ print } $0 == "<GENERATED>" { print "<OTHER-TOOL>"; print "other"; print "</OTHER-TOOL>" }' \
+  "$home/.codex/AGENTS.md" > "$sandbox/codex.tmp" && mv "$sandbox/codex.tmp" "$home/.codex/AGENTS.md"
+HOME="$home" "$install_sh" --uninstall >/dev/null 2>&1
+check "appended guide, heading and separator are removed exactly" "$(printf '# Mine\nkeep this\n')" "$(cat "$home/.claude/CLAUDE.md")"
+check "the file ends as it did" "$(printf '# Mine\nkeep this\n' | od -c)" "$(od -c < "$home/.claude/CLAUDE.md")"
+codex="$(cat "$home/.codex/AGENTS.md")"
+case "$codex" in *"<DECENTLY-CAPABLE-POWERS>"*) fail "the DCP section survived beside another section";; *) ok "the DCP section is gone";; esac
+case "$codex" in *"<OTHER-TOOL>"*"other"*"</OTHER-TOOL>"*) ok "the other tool's section survives";; *) fail "the other section was lost: $codex";; esac
+case "$codex" in *"<GENERATED>"*"</GENERATED>"*) ok "a wrapper that still holds a section stays";; *) fail "the shared wrapper was removed: $codex";; esac
+case "$codex" in "# Codex rules"*) ok "content above the wrapper survives";; *) fail "outside content changed: $codex";; esac
+rm -rf "$sandbox"
+
+echo "install.sh --uninstall: malformed tags and legacy markers"
+new_sandbox
+mkdir -p "$home/.claude" "$home/.codex"
+broken="$(printf '# Mine\n<GENERATED>\n<DECENTLY-CAPABLE-POWERS>\nnever closed\n</GENERATED>\n')"
+printf '%s\n' "$broken" > "$home/.claude/CLAUDE.md"
+printf '# Codex\n%s\nold guide\n%s\n' "$LEGACY_START_FIXTURE" '<!-- DCP:END -->' > "$home/.codex/AGENTS.md"
+out="$(HOME="$home" "$install_sh" --uninstall 2>&1)"; status=$?
+check "uninstall still exits 0 with a malformed file" "0" "$status"
+check "the malformed file is left untouched" "$broken" "$(cat "$home/.claude/CLAUDE.md")"
+case "$out" in *"$home/.claude/CLAUDE.md"*"left untouched"*) ok "the malformed file is reported";; *) fail "no report for the malformed file: $out";; esac
+check "a legacy marker block is removed" "# Codex" "$(cat "$home/.codex/AGENTS.md")"
+rm -rf "$sandbox"
+
+echo "install.sh --uninstall: OpenCode"
+new_sandbox
+mkdir -p "$home/.local/share/opencode"; : > "$home/.local/share/opencode/opencode.db"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+check "install linked OpenCode to the Claude guide" "$home/.claude/CLAUDE.md" "$(link_target "$home/.config/opencode/AGENTS.md")"
+HOME="$home" "$install_sh" --uninstall >/dev/null 2>&1
+check "the OpenCode link DCP made is removed" "0" "$([ -L "$home/.config/opencode/AGENTS.md" ] && echo 1 || echo 0)"
+rm -rf "$sandbox"
+new_sandbox
+mkdir -p "$home/.local/share/opencode" "$home/.config/opencode"; : > "$home/.local/share/opencode/opencode.db"
+printf '# OpenCode rules\n' > "$home/.config/opencode/AGENTS.md"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+HOME="$home" "$install_sh" --uninstall >/dev/null 2>&1
+check "an OpenCode file of the user's own keeps its content" "# OpenCode rules" "$(cat "$home/.config/opencode/AGENTS.md")"
+rm -rf "$sandbox"
+
+echo "install.sh --uninstall: keeps symlinked Cursor and Kiro guide files, and handles CRLF"
+new_sandbox
+mkdir -p "$sandbox/dotfiles" "$home/.cursor/rules" "$home/.kiro/steering"
+: > "$sandbox/dotfiles/cursor.mdc"; : > "$sandbox/dotfiles/kiro.md"
+ln -s "$sandbox/dotfiles/cursor.mdc" "$home/.cursor/rules/decently-capable-powers.mdc"
+ln -s "$sandbox/dotfiles/kiro.md" "$home/.kiro/steering/decently-capable-powers.md"
+HOME="$home" "$install_sh" >/dev/null 2>&1
+out="$(HOME="$home" "$install_sh" --uninstall 2>&1)"
+check "a symlinked Cursor rule keeps its link" "$sandbox/dotfiles/cursor.mdc" "$(link_target "$home/.cursor/rules/decently-capable-powers.mdc")"
+check "a symlinked Kiro steering file keeps its link" "$sandbox/dotfiles/kiro.md" "$(link_target "$home/.kiro/steering/decently-capable-powers.md")"
+check "the shared referent still exists" "1" "$([ -f "$sandbox/dotfiles/cursor.mdc" ] && echo 1 || echo 0)"
+case "$out" in *"decently-capable-powers.mdc"*"symlink"*) ok "the kept symlink is reported";; *) fail "kept symlink not reported: $out";; esac
+printf '# Operating guide\r\n<GENERATED>\r\n<DECENTLY-CAPABLE-POWERS>\r\nguide\r\n</DECENTLY-CAPABLE-POWERS>\r\n</GENERATED>\r\n' > "$home/.codex/AGENTS.md"
+HOME="$home" "$install_sh" --uninstall >/dev/null 2>&1
+check "a CRLF guide-only file is removed, heading included" "0" "$([ -e "$home/.codex/AGENTS.md" ] && echo 1 || echo 0)"
+rm -rf "$sandbox"
+
+echo "install.sh --uninstall --project: undoes a project install"
+new_sandbox
+mkdir -p "$sandbox/proj" "$sandbox/kept"
+printf '# Kept rules\n' > "$sandbox/kept/AGENTS.md"
+printf '# Claude\n' > "$sandbox/kept/CLAUDE.md"
+HOME="$home" "$install_sh" --project "$sandbox/proj" >/dev/null 2>&1
+HOME="$home" "$install_sh" --project "$sandbox/kept" >/dev/null 2>&1
+HOME="$home" "$install_sh" --uninstall --project "$sandbox/proj" >/dev/null 2>&1
+check "--uninstall --project exits 0" "0" "$?"
+check "an AGENTS.md that held only the guide is removed" "0" "$([ -e "$sandbox/proj/AGENTS.md" ] && echo 1 || echo 0)"
+check "a CLAUDE.md that held only the import is removed" "0" "$([ -e "$sandbox/proj/CLAUDE.md" ] && echo 1 || echo 0)"
+HOME="$home" "$install_sh" --uninstall --project "$sandbox/kept" >/dev/null 2>&1
+check "a project AGENTS.md with its own content keeps it" "# Kept rules" "$(cat "$sandbox/kept/AGENTS.md")"
+check "its CLAUDE.md keeps the import of the AGENTS.md that remains" "1" "$(grep -c '^@AGENTS.md$' "$sandbox/kept/CLAUDE.md")"
+check "no user-level config touched" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
+mkdir -p "$sandbox/linked"; : > "$sandbox/shared-claude.md"
+ln -s "$sandbox/shared-claude.md" "$sandbox/linked/CLAUDE.md"
+HOME="$home" "$install_sh" --project "$sandbox/linked" >/dev/null 2>&1
+HOME="$home" "$install_sh" --uninstall --project "$sandbox/linked" >/dev/null 2>&1
+check "a symlinked project CLAUDE.md keeps its link" "$sandbox/shared-claude.md" "$(link_target "$sandbox/linked/CLAUDE.md")"
+check "the import is gone from its referent" "0" "$(grep -c '^@AGENTS.md$' "$sandbox/shared-claude.md")"
+rm -rf "$sandbox"
+
+echo "install.sh --uninstall: rejects combinations that mean nothing"
+new_sandbox
+out="$(HOME="$home" "$install_sh" --uninstall --repair-links 2>&1)"; status=$?
+check "--uninstall with --repair-links exits nonzero" "1" "$status"
+out="$(HOME="$home" "$install_sh" --uninstall --project 2>&1)"; status=$?
+check "--uninstall --project without a directory exits nonzero" "1" "$status"
+check "a rejected uninstall writes nothing" "0" "$([ -d "$home/.claude" ] && echo 1 || echo 0)"
 rm -rf "$sandbox"
 
 # new_sandbox's own guard is the only thing between a failed mktemp and paths derived
