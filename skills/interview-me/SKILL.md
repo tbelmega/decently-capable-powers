@@ -1,13 +1,22 @@
 ---
-name: interviewing
-description: Use when the user asks to be interviewed or questioned on a topic ("interview me on ...", "ask me one by one", "walk me through these"), or when you hold several open questions or decisions only the user can settle
+name: interview-me
+description: Use when the user says "interview me", "interview me on <topic>", "interview me on that" (often about the options or questions your previous turn raised), or "ask me one by one", or when you hold several open questions or decisions only the user can settle; settles them one self-contained question at a time
 ---
 
-# Interviewing
+# Interview me
 
 An interview settles a set of open points with the user, one at a time, so that each answer is
 quick and well informed. Assume the user reads every question cold: they may have lost the
 thread since the point came up, or never read the material behind it.
+
+## What to cover
+
+- A named topic: the open points on that topic.
+- "On that", or a bare "interview me" right after your turn offered options or raised
+  questions: exactly those points.
+- A bare "interview me" with nothing open in the conversation: ask in one question what to
+  cover. Where a work-stream board is set up, offer what waits for the user there as one
+  option (loops-queues).
 
 ## Before the first question
 

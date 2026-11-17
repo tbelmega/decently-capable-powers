@@ -38,7 +38,7 @@ completion state and the available exits are visible across harnesses without sc
 |-------|----------|
 | brainstorming | building before the problem is understood and the design agreed |
 | research | planning against code the agent only knows by name |
-| interviewing | questions the user cannot answer without looking things up |
+| interview-me | questions the user cannot answer without looking things up |
 | coding-standards | type/naming/abstraction drift |
 | model-selection | wrong model or reasoning effort for the task |
 | agent-handover | context rot; dead ends at usage limits |

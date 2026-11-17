@@ -40,7 +40,7 @@ pass. The spec file itself is never skipped.
      preferences, or the decision is cheap to reverse, decide it and record it in the spec as
      an assumption. Ask only where being wrong is expensive given the stakes; low exposure
      widens what counts as cheap to reverse.
-   - Write each question as `interviewing` describes, with your recommended answer; the
+   - Write each question as `interview-me` describes, with your recommended answer; the
      batching rule below overrides its one question per message.
    - Batch up to 4 questions per message only when they are independent (no question's
      relevance depends on another's answer) and close in topic; a dependent chain stays one
